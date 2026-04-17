@@ -10,7 +10,7 @@ import { resolvePath } from '@/components/AppLink';
 const artifacts: Array<{ name: React.ReactNode; date: string; auditor: string; file: string; sha: string }> = [
   { name: 'SOC 2 Type II report', date: 'period 2025-09 → 2026-03', auditor: 'Coalfire', file: 'soc2-type-ii-2026h1.pdf', sha: 'sha256:a2…91c' },
   { name: 'Pen-test letter', date: '2026-02-14', auditor: 'Bishop Fox', file: 'pentest-2026q1.pdf', sha: 'sha256:5f…b2d' },
-  { name: <Help term="CAIQ Lite (v5)" explain="Consensus Assessments Initiative Questionnaire — industry-standard vendor security questionnaire from the Cloud Security Alliance. Procurement often requires this." />, date: 'submitted 2026-03-31', auditor: 'Internal', file: 'caiq-lite-v5.xlsx', sha: 'sha256:8e…43a' },
+  { name: <Help term="CAIQ Lite (v5)" explain="Consensus Assessments Initiative Questionnaire — industry-standard vendor security questionnaire from the Cloud Security Alliance. Procurement often requires this." />, date: 'submitted 2026-03-31', auditor: 'Internal', file: 'caiq-lite-v5.pdf', sha: 'sha256:8e…43a' },
   { name: 'FedRAMP moderate roadmap', date: 'In Process target 2026-Q4', auditor: 'Internal · sponsor: DoE', file: 'fedramp-plan.pdf', sha: 'sha256:3b…77e' },
 ];
 
@@ -77,9 +77,9 @@ export default function TrustPage() {
                 </td>
                 <td className="px-3 py-3 text-right">
                   <a
-                    href={resolvePath('/trust/draft.pdf')}
+                    href={resolvePath(`/trust/${a.file}`)}
                     download={a.file}
-                    onClick={() => showToast(`Signed ${a.file} · ${a.sha}`)}
+                    onClick={() => showToast(`Downloading ${a.file} · ${a.sha} · DRAFT stub · real signed copy on PO signing`)}
                     className="inline-flex items-center gap-1 px-2 py-1 text-[11px] rounded border border-unbound-border hover:bg-unbound-bg-hover"
                   >
                     <Download className="w-3 h-3" /> Download
@@ -178,9 +178,9 @@ export default function TrustPage() {
                 <td className="px-3 py-3 text-unbound-text-tertiary">{m.adversarial}</td>
                 <td className="px-3 py-3 text-right">
                   <a
-                    href={resolvePath('/trust/draft.pdf')}
+                    href={resolvePath(`/trust/model-card-${m.name}.pdf`)}
                     download={`model-card-${m.name}.pdf`}
-                    onClick={() => showToast(`Model card for ${m.name} · methodology link included`)}
+                    onClick={() => showToast(`Model card for ${m.name} · methodology link included · DRAFT stub`)}
                     className="inline-flex items-center gap-1 px-2 py-1 text-[11px] rounded border border-unbound-border hover:bg-unbound-bg-hover"
                   >
                     <Download className="w-3 h-3" /> Model card
