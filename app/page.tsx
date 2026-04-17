@@ -21,6 +21,61 @@ import { fleet, severityCounts, findings } from '@/lib/mock-data';
 import BreakChainModal from '@/components/BreakChainModal';
 import { Toast } from '@/components/Modal';
 import { useStore, type PendingAction } from '@/lib/store';
+import AttackPathGraph, { type Chain } from '@/components/AttackPathGraph';
+import { Brain } from 'lucide-react';
+
+const chains: Chain[] = [
+  {
+    name: 'YOLO execution chain',
+    kind: 'curated',
+    nodes: [
+      { label: 'YOLO', sev: 'critical', explain: 'Permission prompts disabled — agent runs shell without asking' },
+      { label: 'sandbox off', sev: 'critical', explain: 'No OS fence around agent commands' },
+      { label: 'cloud creds', sev: 'high', explain: '~/.aws/credentials readable by agent' },
+      { label: 'prod-git write', sev: 'high', explain: 'Push access to 17 prod repos' },
+    ],
+    devices: ['sarah.chen', 'raj.patel', 'devtest-3'],
+    deviceCount: 3,
+    breakEdge: { after: 0, profile: 'claude-perm-ceiling.mobileconfig', effect: 'disables YOLO fleet-wide, collapses the chain at its root' },
+  },
+  {
+    name: 'Personal-account leak chain',
+    kind: 'curated',
+    nodes: [
+      { label: 'personal acct', sev: 'critical', explain: 'Claude signed in with @gmail on managed device' },
+      { label: 'corp repos', sev: 'high', explain: 'Touches 12 corp GitHub repos' },
+      { label: 'no DLP', sev: 'medium', explain: 'Consumer plan — outside ZDR contract' },
+    ],
+    devices: ['marcus.w'],
+    deviceCount: 1,
+    breakEdge: { after: 0, profile: 'claude-sso-only.mobileconfig', effect: 'MDM forces SSO sign-in only' },
+  },
+  {
+    name: 'IMDS-exfil chain',
+    kind: 'curated',
+    nodes: [
+      { label: 'IMDS reach', sev: 'critical', explain: 'Sandbox can reach 169.254.169.254' },
+      { label: 'cloud creds', sev: 'high', explain: 'IAM role creds fetchable via metadata endpoint' },
+      { label: 'data exfil', sev: 'high', explain: 'network_access=true in sandbox' },
+    ],
+    devices: ['devtest-3'],
+    deviceCount: 1,
+    breakEdge: { after: 0, profile: 'codex-imds-deny.toml', effect: 'denies 169.254.169.254 + RFC1918 in sandbox egress' },
+  },
+  {
+    name: 'Hook persistence chain (novel)',
+    kind: 'dynamic',
+    nodes: [
+      { label: 'malicious hook', sev: 'critical', explain: 'curl | bash in project .claude/settings.json' },
+      { label: 'sandbox writable', sev: 'high', explain: 'Filesystem guards off' },
+      { label: 'LaunchAgents', sev: 'high', explain: '~/Library/LaunchAgents writable — survives reboot' },
+    ],
+    devices: ['jenna.l'],
+    deviceCount: 1,
+    breakEdge: { after: 0, profile: 'claude-managed-hooks-only.mobileconfig', effect: 'allowManagedHooksOnly=true · project hooks ignored' },
+    dynamicExplain: "jenna.l's device has a project-level hook + writable filesystem + LaunchAgent-writable — not a pattern we've seen before. AI composed this chain from her active escalators.",
+  },
+];
 
 function Tile({
   label,
@@ -119,6 +174,33 @@ export default function Overview() {
         </div>
       </Card>
 
+      {/* What changed since Friday — LLM-authored narrative */}
+      <Card className="mb-5">
+        <CardHeader
+          title="What changed since Friday 17:00"
+          meta="narrative summary · regenerated every scan"
+          right={
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-unbound-purple/10 text-unbound-purple text-[10px] font-semibold uppercase tracking-wider">
+              <Brain className="w-3 h-3" /> AI
+            </span>
+          }
+        />
+        <div className="p-5 text-[13px] text-unbound-text-secondary leading-relaxed space-y-2">
+          <p>
+            <span className="font-semibold text-unbound-text-primary">3 new Criticals</span> landed over the weekend. Most severe: a malicious hook on jenna.l's DevOps laptop — a project-level `.claude/settings.json` piping pastebin content to bash. Classifier confidence 0.97.
+          </p>
+          <p>
+            <span className="font-semibold text-unbound-text-primary">Sarah's YOLO is back</span>. Her 2026-03-22 waiver expired Friday 23:59; she flipped bypassPermissions on again 2h into Monday. Same device now composes the YOLO-execution chain with cloud-creds and prod-git-write — the exact combo that caused last quarter's Eng-Platform incident.
+          </p>
+          <p>
+            <span className="font-semibold text-unbound-text-primary">Supply-chain inbox grew</span>: 2 unvetted MCPs added fleet-wide (unofficial-gh-mcp@latest on 4 devices; mcp-random-analytics on 1). Neither is on the approved catalog.
+          </p>
+          <p className="text-unbound-text-tertiary text-[12px]">
+            Suggested sequence: break the YOLO chain on Sarah+Raj+devtest-3 with one policy push (collapses 3 findings), then triage the hook on jenna.l before her on-call window starts in 14h.
+          </p>
+        </div>
+      </Card>
+
       {/* Pending actions — visible side effects from Break chain / Freeze / approvals */}
       {pending.length > 0 && (
         <Card className="mb-5 border-unbound-purple/30">
@@ -212,43 +294,25 @@ export default function Overview() {
         </Card>
 
         <Card className="col-span-2">
-          <CardHeader title="Attack-path chains" right={<Zap className="w-4 h-4 text-unbound-purple" />} />
-          <div className="p-5 space-y-4 text-[12.5px]">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <SevBadge severity="critical">3 devices</SevBadge>
-                <button
-                  onClick={() => setChainOpen({
-                    chain: 'YOLO → sandbox-off → cloud-creds → prod-git-write',
-                    devices: ['sarah.chen', 'raj.patel', 'devtest-3'],
-                  })}
-                  className="text-[11px] text-unbound-purple font-semibold hover:underline"
-                >
-                  Break chain
-                </button>
+          <CardHeader title="Attack-path chains" meta={`${chains.length} active`} right={<Zap className="w-4 h-4 text-unbound-purple" />} />
+          <div className="p-5 space-y-4">
+            {chains.map((c) => (
+              <div key={c.name} className="pb-3 border-b border-unbound-border last:border-0 last:pb-0">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="text-[12px] font-semibold text-unbound-text-primary">{c.name}</div>
+                  <SevBadge severity="critical">{c.deviceCount} device{c.deviceCount > 1 ? 's' : ''}</SevBadge>
+                </div>
+                <AttackPathGraph
+                  chain={c}
+                  onBreakChain={() =>
+                    setChainOpen({
+                      chain: c.nodes.map((n) => n.label).join(' › '),
+                      devices: c.devices,
+                    })
+                  }
+                />
               </div>
-              <div className="mono text-[12px] bg-unbound-bg rounded-md p-3 leading-relaxed">
-                YOLO <span className="text-unbound-text-muted">→</span> sandbox-off <span className="text-unbound-text-muted">→</span> cloud-creds <span className="text-unbound-text-muted">→</span> prod-git-write
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <SevBadge severity="critical">1 device</SevBadge>
-                <button
-                  onClick={() => setChainOpen({
-                    chain: 'personal-acct → corp-repos → no-DLP',
-                    devices: ['marcus.w'],
-                  })}
-                  className="text-[11px] text-unbound-purple font-semibold hover:underline"
-                >
-                  Break chain
-                </button>
-              </div>
-              <div className="mono text-[12px] bg-unbound-bg rounded-md p-3 leading-relaxed">
-                personal-acct <span className="text-unbound-text-muted">→</span> corp-repos <span className="text-unbound-text-muted">→</span> no-DLP
-              </div>
-            </div>
+            ))}
           </div>
         </Card>
       </div>

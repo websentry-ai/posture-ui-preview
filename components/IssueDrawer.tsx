@@ -18,6 +18,8 @@ import { cn } from '@/lib/utils';
 import WaiveModal from './WaiveModal';
 import ForwardModal from './ForwardModal';
 import { Toast } from './Modal';
+import { suggestedAction, whyNowNarrative, buManager } from '@/lib/mock-data';
+import { Zap, Brain, User } from 'lucide-react';
 
 export default function IssueDrawer({
   finding,
@@ -80,8 +82,13 @@ export default function IssueDrawer({
             <SeverityPill finding={finding} />
             <h2 className="text-[16px] font-semibold text-unbound-text-primary">{finding.title}</h2>
           </div>
-          <div className="mt-1 text-[12px] text-unbound-text-tertiary">
-            {finding.user} · {finding.bu} · {finding.device}
+          <div className="mt-1 text-[12px] text-unbound-text-tertiary flex items-center gap-2 flex-wrap">
+            <span>{finding.user} · {finding.bu} · {finding.device}</span>
+            {buManager[finding.bu] && (
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10.5px] bg-unbound-bg border border-unbound-border">
+                <User className="w-2.5 h-2.5" /> owner: {buManager[finding.bu]}
+              </span>
+            )}
           </div>
         </div>
 
@@ -127,6 +134,45 @@ export default function IssueDrawer({
 
         {/* body */}
         <div className="flex-1 overflow-y-auto drawer-scroll">
+          {/* AI-native guidance rows — rules-driven next action + LLM-narrative why-now */}
+          {suggestedAction[finding.ruleId] && (
+            <div className="px-5 py-4 border-b border-unbound-border bg-unbound-purple/5">
+              <div className="flex items-start gap-2">
+                <Zap className="w-4 h-4 text-unbound-purple shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <div className="text-[11px] uppercase tracking-wider text-unbound-purple font-semibold">Suggested next action</div>
+                  <div className="text-[13px] text-unbound-text-primary font-medium mt-0.5">{suggestedAction[finding.ruleId].title}</div>
+                </div>
+                <button
+                  onClick={() => {
+                    const sa = suggestedAction[finding.ruleId];
+                    if (sa.profile) {
+                      showToast(`${sa.profile}.mobileconfig queued · Jamf canary 10% first · ETA 14 min`);
+                    } else {
+                      showToast(sa.cta);
+                    }
+                  }}
+                  className="px-2.5 py-1 text-[11.5px] rounded bg-unbound-purple text-white hover:bg-unbound-purple-hover shrink-0"
+                >
+                  {suggestedAction[finding.ruleId].cta}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {whyNowNarrative[finding.id] && (
+            <div className="px-5 py-4 border-b border-unbound-border">
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-unbound-text-muted mb-1.5">
+                <Brain className="w-3.5 h-3.5 text-unbound-purple" />
+                Why this matters now
+                <span title="Generated at drawer-open time from device + finding + fleet + history context. Reviewable in the audit log." className="ml-1 px-1 py-0 rounded bg-unbound-bg text-[9px] uppercase tracking-wider text-unbound-text-tertiary font-medium cursor-help">
+                  AI
+                </span>
+              </div>
+              <p className="text-[12.5px] text-unbound-text-secondary leading-relaxed">{whyNowNarrative[finding.id]}</p>
+            </div>
+          )}
+
           <Section title="Evidence" meta="verified 38 min ago">
             {finding.evidence.map((ev, i) => (
               <div key={i} className="mb-3 last:mb-0">

@@ -524,6 +524,143 @@ export const heatmap = [
   { bu: 'DevOps', c: 1, h: 1, m: 0, l: 0, waived: 2, mttr: '3.4d' },
 ];
 
+// Real-ish MCP inventory — first 3 are exact reproductions of what's
+// on the founder's actual machine (posthog · playwright · github-issue-reader).
+// Rest are synthetic to show variety: fleet prevalence, approved-catalog,
+// unvetted-at-scale.
+export type McpEntry = {
+  name: string;
+  source: 'Claude Code' | 'Cursor' | 'Codex';
+  scope: 'user' | 'project' | 'system';
+  transportKind: 'stdio' | 'http' | 'sse';
+  commandOrUrl: string;
+  pin: 'exact' | '@latest' | 'local' | 'n/a';
+  toolsAutoApproved: number;
+  autoApprovedNames: string[];
+  matchedFindings: number[];
+  devices: number;
+  firstSeen: string;
+};
+
+// Rules-driven suggested-next-action per finding type.
+// In production: rules engine matches finding + escalator context -> template.
+// In prototype: hardcoded per ruleId with a single admin-fix CTA.
+export const suggestedAction: Record<number, { title: string; cta: string; profile?: string }> = {
+  1: { title: 'Force SSO sign-in via MDM', cta: 'Deploy claude-sso-only.mobileconfig', profile: 'claude-sso-only' },
+  2: { title: 'Disable bypass via managed setting', cta: 'Deploy claude-perm-ceiling.mobileconfig', profile: 'claude-perm-ceiling' },
+  3: { title: 'Enforce sandbox ceiling', cta: 'Deploy claude-sandbox-enforce.mobileconfig', profile: 'claude-sandbox-enforce' },
+  4: { title: 'Lock corp gateway + revoke rogue CA', cta: 'Deploy llm-gateway-allowlist.mobileconfig', profile: 'llm-gateway-allowlist' },
+  5: { title: 'Migrate key to OS keychain', cta: 'Run migrate-secrets.sh on device' },
+  6: { title: 'Add to approved catalog or remove', cta: 'Open catalog inbox' },
+  7: { title: 'Revoke auto-approve on write tools', cta: 'Push managed permission ceiling' },
+  8: { title: 'Narrow allowlist + add dangerous-verb deny', cta: 'Deploy bash-allowlist-template.mobileconfig' },
+  9: { title: 'Force managed-hooks-only', cta: 'Deploy claude-managed-hooks-only.mobileconfig', profile: 'claude-managed-hooks-only' },
+  22: { title: 'Deny IMDS + RFC1918 in sandbox', cta: 'Deploy codex-imds-deny.toml', profile: 'codex-imds-deny' },
+};
+
+// LLM-style contextual narrative per finding.
+// In production: LLM prompted with finding + device + history + fleet state.
+// In prototype: hand-authored to show the shape of what LLM would say.
+export const whyNowNarrative: Record<string, string> = {
+  'F-00271': "Sarah flipped YOLO on 2h ago after her last waiver expired yesterday. This is her 3rd YOLO finding in 30d. Cloud credentials sit at ~/.aws/credentials and she has push access to 17 prod repos. Same pattern broke containment in last quarter's Eng-Platform incident. High urgency: her on-call shift starts in 14h.",
+  'F-00272': "Marcus added ANTHROPIC_BASE_URL 18h ago with no corporate-gateway approval. The CA that accompanies it ('SuperCorp-Debug-CA') was installed 2d ago and isn't on the org PKI allowlist. If this is an in-flight pen test by a third-party, there's no ticket. If it's not, every prompt from his laptop has gone through a proxy he controls for the last 18h.",
+  'F-00273': "devtest-3 is a shared QA service account in Dublin. network_access=true was set by a Cursor config sync from a template that wasn't meant to ship. IMDS is reachable from the sandbox. This pattern on CI/service accounts is how Capital One lost 100M records in 2019.",
+  'F-00281': "Raj is signed in to Claude Code with raj.patel@gmail.com on a managed laptop. He's opened 47 prompts on corp-github repos in the last 14d. ZDR doesn't apply; every prompt contains code we don't want on a consumer plan. His SSO migration ticket SEC-842 is stalled 3w in IT backlog.",
+  'F-00284': "jenna.l added 'unofficial-gh-mcp@latest' to her Cursor config 2d ago. Publisher randomhandle123 is 14d old on npm with 99 total downloads and no linked repo. 3 of the tools it exposes can write to GitHub. If the npm author is hijacked (or malicious), next Cursor start pulls arbitrary code.",
+  'F-00290': "sarah.chen's permissions.allow contains 'Bash' (no parens, no scope). deny is empty. That means any shell command Claude generates runs without confirmation — same shape as YOLO but via a different knob.",
+  'F-00301': "Project-level .claude/settings.json in a repo jenna cloned 5h ago defines a PreToolUse hook that pipes pastebin content to bash. The hook fires the first time Claude calls any tool. Classifier confidence 0.97, flagged for human review. This is the dominant 2026 supply-chain AI attack shape.",
+};
+
+// Likely-owner: rules-based. Maps BU -> manager.
+export const buManager: Record<string, string> = {
+  'Eng-Platform': 'alex.rivera',
+  'Eng-AI': 'priya.shah',
+  'Finance': 'nadia.q',
+  'QA': 'qa-team-lead',
+  'DevOps': 'kumar.v',
+};
+
+export const mcpInventory: McpEntry[] = [
+  {
+    name: 'posthog',
+    source: 'Claude Code',
+    scope: 'user',
+    transportKind: 'http',
+    commandOrUrl: 'https://mcp.posthog.com/mcp',
+    pin: 'n/a',
+    toolsAutoApproved: 0,
+    autoApprovedNames: [],
+    matchedFindings: [6],
+    devices: 1,
+    firstSeen: 'today',
+  },
+  {
+    name: 'playwright',
+    source: 'Codex',
+    scope: 'user',
+    transportKind: 'stdio',
+    commandOrUrl: 'npx @playwright/mcp@latest',
+    pin: '@latest',
+    toolsAutoApproved: 4,
+    autoApprovedNames: ['browser_navigate', 'browser_run_code', 'browser_click', 'browser_press_key'],
+    matchedFindings: [6, 7],
+    devices: 1,
+    firstSeen: 'today',
+  },
+  {
+    name: 'github-issue-reader',
+    source: 'Claude Code',
+    scope: 'project',
+    transportKind: 'stdio',
+    commandOrUrl: 'python3 /Users/vigneshsubbiah/unbound-mcp-security-test/vulnerable_mcp_server.py',
+    pin: 'local',
+    toolsAutoApproved: 0,
+    autoApprovedNames: [],
+    matchedFindings: [6, 24],
+    devices: 1,
+    firstSeen: '2d ago',
+  },
+  {
+    name: 'linear-server',
+    source: 'Claude Code',
+    scope: 'user',
+    transportKind: 'stdio',
+    commandOrUrl: 'npx @modelcontextprotocol/server-linear@1.2.4',
+    pin: 'exact',
+    toolsAutoApproved: 5,
+    autoApprovedNames: ['get_project', 'list_issues', 'get_issue', 'update_issue', 'list_comments'],
+    matchedFindings: [7],
+    devices: 312,
+    firstSeen: '3 mo ago',
+  },
+  {
+    name: 'notion',
+    source: 'Claude Code',
+    scope: 'user',
+    transportKind: 'http',
+    commandOrUrl: 'https://mcp.notion.com/sse',
+    pin: 'n/a',
+    toolsAutoApproved: 2,
+    autoApprovedNames: ['notion-fetch', 'notion-update-page'],
+    matchedFindings: [7],
+    devices: 201,
+    firstSeen: '2 mo ago',
+  },
+  {
+    name: 'unofficial-gh-mcp',
+    source: 'Cursor',
+    scope: 'user',
+    transportKind: 'stdio',
+    commandOrUrl: 'npx unofficial-gh-mcp@latest',
+    pin: '@latest',
+    toolsAutoApproved: 3,
+    autoApprovedNames: ['gh_create_issue', 'gh_push_commit', 'gh_delete_branch'],
+    matchedFindings: [6, 7],
+    devices: 4,
+    firstSeen: '2d ago',
+  },
+];
+
 export const mcpInbox = [
   {
     name: 'unofficial-gh-mcp@latest',
