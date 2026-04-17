@@ -1,8 +1,14 @@
+'use client';
+
+import { useState } from 'react';
 import { PageHeader, Card } from '@/components/Card';
 import { integrations } from '@/lib/mock-data';
 import { Check, Plug, AlertCircle } from 'lucide-react';
+import { Toast } from '@/components/Modal';
 
 export default function Page() {
+  const [toast, setToast] = useState<string | null>(null);
+  const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2400); };
   const byCat: Record<string, typeof integrations> = {};
   for (const i of integrations) {
     if (!byCat[i.category]) byCat[i.category] = [];
@@ -15,7 +21,7 @@ export default function Page() {
         title="Integrations"
         meta="14 connected · 3 not set"
         right={
-          <button className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
+          <button onClick={() => showToast('Integration catalog opened · 27 providers available')} className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
             <Plug className="w-3.5 h-3.5" /> Add integration
           </button>
         }
@@ -48,15 +54,15 @@ export default function Page() {
                 <div className="mt-3 flex gap-1">
                   {i.status === 'connected' ? (
                     <>
-                      <button className="text-[11px] px-2 py-1 rounded border border-unbound-border hover:bg-unbound-bg-hover">
+                      <button onClick={() => showToast(`${i.name} · configure panel opened`)} className="text-[11px] px-2 py-1 rounded border border-unbound-border hover:bg-unbound-bg-hover">
                         Configure
                       </button>
-                      <button className="text-[11px] px-2 py-1 rounded border border-unbound-border hover:bg-unbound-bg-hover">
+                      <button onClick={() => showToast(`Test event sent to ${i.name} · round-trip 142ms · CIM schema validated`)} className="text-[11px] px-2 py-1 rounded border border-unbound-border hover:bg-unbound-bg-hover">
                         Test
                       </button>
                     </>
                   ) : (
-                    <button className="text-[11px] px-2 py-1 rounded bg-unbound-purple text-white hover:bg-unbound-purple-hover">
+                    <button onClick={() => showToast(`Connect flow for ${i.name} · OAuth handshake starting`)} className="text-[11px] px-2 py-1 rounded bg-unbound-purple text-white hover:bg-unbound-purple-hover">
                       Connect
                     </button>
                   )}
@@ -66,6 +72,7 @@ export default function Page() {
           </div>
         </div>
       ))}
+      {toast && <Toast message={toast} kind="success" />}
     </>
   );
 }

@@ -28,6 +28,7 @@ export default function DeviceDetailClient({
   const [tab, setTab] = useState<'issues' | 'inventory' | 'configuration' | 'timeline'>('issues');
   const [freezeOpen, setFreezeOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [frozen, setFrozen] = useState<string | null>(null);
 
   const showToast = (m: string) => {
     setToast(m);
@@ -51,6 +52,11 @@ export default function DeviceDetailClient({
             <div className="text-[13px] text-unbound-text-tertiary mt-1 mono">
               {device.id} · {device.os} · MDM: {device.mdm} · Scanner: {device.lastSync} ago
             </div>
+            {frozen && (
+              <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11.5px] font-medium bg-sev-critical-bg text-sev-critical border border-sev-critical/30">
+                <AlertTriangle className="w-3 h-3" /> Frozen ({frozen}) · unfreeze requires CISO approval
+              </div>
+            )}
           </div>
           <div className="flex gap-2">
             <button
@@ -276,7 +282,7 @@ export default function DeviceDetailClient({
           meta="Blast-radius check · fleet pivot"
         />
         <div className="p-5 grid grid-cols-2 gap-3 text-[13px]">
-          <Link href="/issues" className="flex items-center justify-between p-3 rounded-md border border-unbound-border hover:bg-unbound-bg-hover">
+          <Link href="/issues?rule=6" className="flex items-center justify-between p-3 rounded-md border border-unbound-border hover:bg-unbound-bg-hover">
             <div className="flex items-center gap-2">
               <Globe className="w-4 h-4 text-unbound-purple" />
               <span>Same MCP elsewhere?</span>
@@ -286,7 +292,7 @@ export default function DeviceDetailClient({
               <ChevronRight className="w-3.5 h-3.5" />
             </div>
           </Link>
-          <Link href="/issues" className="flex items-center justify-between p-3 rounded-md border border-unbound-border hover:bg-unbound-bg-hover">
+          <Link href="/issues?rule=9" className="flex items-center justify-between p-3 rounded-md border border-unbound-border hover:bg-unbound-bg-hover">
             <div className="flex items-center gap-2">
               <Shield className="w-4 h-4 text-unbound-purple" />
               <span>Same hook pattern?</span>
@@ -319,7 +325,16 @@ export default function DeviceDetailClient({
         </div>
       </Card>
 
-      <FreezeModal open={freezeOpen} onClose={() => setFreezeOpen(false)} deviceId={device.id} user={device.user} />
+      <FreezeModal
+        open={freezeOpen}
+        onClose={() => setFreezeOpen(false)}
+        onConfirm={(i) => {
+          setFrozen(i.label);
+          showToast(`Frozen (${i.label}) · #INC-2183 opened · Slack #secops-pager notified · audit ledger entry written`);
+        }}
+        deviceId={device.id}
+        user={device.user}
+      />
       {toast && <Toast message={toast} kind="success" />}
     </>
   );

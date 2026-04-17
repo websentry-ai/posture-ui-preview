@@ -1,5 +1,9 @@
+'use client';
+
+import { useState } from 'react';
 import { PageHeader, Card, CardHeader } from '@/components/Card';
 import { ShieldAlert, EyeOff, FileDown } from 'lucide-react';
+import { Toast } from '@/components/Modal';
 
 const sups = [
   { scope: 'Per-instance', finding: '#2 YOLO on sarah.chen', who: 'ciso@corp', reason: 'SOC-842 in progress', expires: '6d' },
@@ -11,13 +15,15 @@ const sups = [
 ];
 
 export default function Page() {
+  const [toast, setToast] = useState<string | null>(null);
+  const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2400); };
   return (
     <>
       <PageHeader
         title="Suppressions"
         meta={`${sups.length} active · 3 expiring ≤7d`}
         right={
-          <button className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md border border-unbound-border bg-white hover:bg-unbound-bg-hover">
+          <button onClick={() => showToast('Exported suppressions-audit.csv')} className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md border border-unbound-border bg-white hover:bg-unbound-bg-hover">
             <FileDown className="w-3.5 h-3.5" /> Export audit CSV
           </button>
         }
@@ -35,10 +41,10 @@ export default function Page() {
               91% of QA BU (96 / 105 devices) has "#2 YOLO" waived. Approver <span className="mono">j.kim</span> granted 84% of those on a single Friday afternoon. This pattern typically indicates an alert-fatigue mute rather than an accepted-risk decision.
             </div>
             <div className="mt-2 flex gap-2">
-              <button className="text-[12px] px-2.5 py-1 rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
+              <button onClick={() => showToast('Re-justification required · 96 waivers reset to pending · owner: j.kim')} className="text-[12px] px-2.5 py-1 rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
                 Force re-justification
               </button>
-              <button className="text-[12px] px-2.5 py-1 rounded-md border border-unbound-border bg-white hover:bg-unbound-bg-hover">
+              <button onClick={() => showToast("j.kim's waiver history exported · 142 entries")} className="text-[12px] px-2.5 py-1 rounded-md border border-unbound-border bg-white hover:bg-unbound-bg-hover">
                 Review approver history
               </button>
             </div>
@@ -72,10 +78,10 @@ export default function Page() {
                 <td className="px-3 py-3 text-unbound-text-tertiary">{s.reason}</td>
                 <td className="px-3 py-3 text-unbound-text-secondary">{s.expires}</td>
                 <td className="px-3 py-3 text-right space-x-1">
-                  <button className="text-[11px] px-2 py-1 rounded border border-unbound-border hover:bg-unbound-bg-hover">
+                  <button onClick={() => showToast(`Extended ${s.finding} +30d · audit entry written`)} className="text-[11px] px-2 py-1 rounded border border-unbound-border hover:bg-unbound-bg-hover">
                     Extend
                   </button>
-                  <button className="text-[11px] px-2 py-1 rounded border border-unbound-border hover:bg-unbound-bg-hover">
+                  <button onClick={() => showToast(`Revoked · ${s.finding} re-opened`)} className="text-[11px] px-2 py-1 rounded border border-unbound-border hover:bg-unbound-bg-hover">
                     Revoke
                   </button>
                 </td>
@@ -84,6 +90,7 @@ export default function Page() {
           </tbody>
         </table>
       </Card>
+      {toast && <Toast message={toast} kind="success" />}
     </>
   );
 }

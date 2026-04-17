@@ -292,6 +292,7 @@ export default function IssueDrawer({
       <ForwardModal
         open={forwardOpen}
         onClose={() => setForwardOpen(false)}
+        onConfirm={(i) => showToast(`Sent via ${i.channel} · ${i.user} · re-check scheduled in ${i.deadline}`)}
         user={finding.user}
         body={finding.userFix}
       />

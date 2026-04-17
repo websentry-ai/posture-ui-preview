@@ -19,6 +19,7 @@ import {
 import { cn } from '@/lib/utils';
 import { fleet, severityCounts, findings } from '@/lib/mock-data';
 import BreakChainModal from '@/components/BreakChainModal';
+import { Toast } from '@/components/Modal';
 
 function Tile({
   label,
@@ -62,6 +63,9 @@ function Tile({
 export default function Overview() {
   const sev = severityCounts(findings);
   const [chainOpen, setChainOpen] = useState<null | { chain: string; devices: string[] }>(null);
+  const [timeRange, setTimeRange] = useState<'day' | 'week' | 'month'>('week');
+  const [toast, setToast] = useState<string | null>(null);
+  const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2800); };
 
   return (
     <>
@@ -71,11 +75,25 @@ export default function Overview() {
         right={
           <div className="flex gap-2">
             <div className="inline-flex rounded-md border border-unbound-border bg-white overflow-hidden text-[12px]">
-              <button className="px-3 py-1.5 text-unbound-text-tertiary hover:bg-unbound-bg-hover">Day</button>
-              <button className="px-3 py-1.5 bg-unbound-purple/10 text-unbound-purple font-medium">Week</button>
-              <button className="px-3 py-1.5 text-unbound-text-tertiary hover:bg-unbound-bg-hover">Month</button>
+              {(['day', 'week', 'month'] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTimeRange(t)}
+                  className={cn(
+                    'px-3 py-1.5 capitalize',
+                    timeRange === t
+                      ? 'bg-unbound-purple/10 text-unbound-purple font-medium'
+                      : 'text-unbound-text-tertiary hover:bg-unbound-bg-hover'
+                  )}
+                >
+                  {t}
+                </button>
+              ))}
             </div>
-            <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
+            <button
+              onClick={() => showToast('Signed PDF generated · posture-Q1-2026.pdf · sha256:7d…a81c')}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover"
+            >
               <FileDown className="w-3.5 h-3.5" />
               Export signed PDF
             </button>
@@ -83,7 +101,7 @@ export default function Overview() {
         }
       />
 
-      {/* Top KPI — 4 tiles only */}
+      {/* Consolidated KPI + coverage strip */}
       <Card className="mb-5">
         <div className="grid grid-cols-4 divide-x divide-unbound-border">
           <Tile label="Critical" value={sev.critical} delta="+1" deltaDir="up" href="/issues" />
@@ -91,36 +109,11 @@ export default function Overview() {
           <Tile label="MTTR Critical" value="2.1d" />
           <Tile label="Dark fleet" value={228} delta="+3" deltaDir="up" href="/fleet/devices" />
         </div>
-      </Card>
-
-      {/* FLEET VISIBILITY — CISO buy trigger */}
-      <Card className="mb-5">
-        <CardHeader title="Fleet visibility" meta={`${fleet.total} managed · ${fleet.unmanaged} blind · ${fleet.coveragePct}% coverage`} right={<EyeOff className="w-4 h-4 text-sev-medium" />} />
-        <div className="grid grid-cols-4 divide-x divide-unbound-border">
-          <CoverageTile
-            icon={<Eye className="w-3.5 h-3.5 text-sev-low" />}
-            label="Scanning"
-            value={fleet.scannerInstalled}
-            href="/fleet/devices"
-          />
-          <CoverageTile
-            icon={<Clock3 className="w-3.5 h-3.5 text-sev-medium" />}
-            label="Stale >24h"
-            value={fleet.scannerStale}
-            href="/fleet/devices"
-          />
-          <CoverageTile
-            icon={<EyeOff className="w-3.5 h-3.5 text-sev-critical" />}
-            label="No scanner"
-            value={228}
-            href="/admin/setup"
-          />
-          <CoverageTile
-            icon={<AlertTriangle className="w-3.5 h-3.5 text-sev-high" />}
-            label="BYOD opt-in"
-            value={15}
-            href="/fleet/byod"
-          />
+        <div className="grid grid-cols-4 divide-x divide-t divide-unbound-border border-t border-unbound-border">
+          <CoverageTile icon={<Eye className="w-3.5 h-3.5 text-sev-low" />} label="Scanning" value={fleet.scannerInstalled} href="/fleet/devices" />
+          <CoverageTile icon={<Clock3 className="w-3.5 h-3.5 text-sev-medium" />} label="Stale >24h" value={fleet.scannerStale} href="/fleet/devices" />
+          <CoverageTile icon={<EyeOff className="w-3.5 h-3.5 text-sev-critical" />} label="No scanner" value={228} href="/admin/setup" />
+          <CoverageTile icon={<AlertTriangle className="w-3.5 h-3.5 text-sev-high" />} label="BYOD opt-in" value={15} href="/fleet/byod" />
         </div>
       </Card>
 
@@ -238,9 +231,11 @@ export default function Overview() {
       <BreakChainModal
         open={!!chainOpen}
         onClose={() => setChainOpen(null)}
+        onConfirm={(i) => showToast(`${i.profileCount} profiles queued · Jamf deploying to ${i.deviceCount} devices · rollout canary 10% first`)}
         chain={chainOpen?.chain ?? ''}
         devices={chainOpen?.devices ?? []}
       />
+      {toast && <Toast message={toast} kind="success" />}
     </>
   );
 }

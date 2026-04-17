@@ -6,11 +6,13 @@ import { Zap, Download, Users } from 'lucide-react';
 export default function BreakChainModal({
   open,
   onClose,
+  onConfirm,
   chain,
   devices,
 }: {
   open: boolean;
   onClose: () => void;
+  onConfirm?: (info: { profileCount: number; deviceCount: number }) => void;
   chain: string;
   devices: string[];
 }) {
@@ -26,7 +28,13 @@ export default function BreakChainModal({
           <button onClick={onClose} className="px-3 py-1.5 text-[12px] rounded-md border border-unbound-border hover:bg-white">
             Cancel
           </button>
-          <button onClick={onClose} className="px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover inline-flex items-center gap-1">
+          <button
+            onClick={() => {
+              onConfirm?.({ profileCount: 2, deviceCount: devices.length });
+              onClose();
+            }}
+            className="px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover inline-flex items-center gap-1"
+          >
             <Zap className="w-3.5 h-3.5" /> Push 2 policies to {devices.length} devices
           </button>
         </>

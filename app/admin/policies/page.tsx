@@ -1,8 +1,19 @@
+'use client';
+
+import { useState } from 'react';
 import { PageHeader, Card, CardHeader } from '@/components/Card';
 import { mdmProfiles } from '@/lib/mock-data';
 import { Download, ShieldCheck } from 'lucide-react';
+import { Toast } from '@/components/Modal';
+import { cn } from '@/lib/utils';
+
+type Vendor = 'Jamf' | 'Intune' | 'Kandji' | 'Workspace ONE';
 
 export default function PoliciesPage() {
+  const [vendor, setVendor] = useState<Vendor>('Jamf');
+  const [toast, setToast] = useState<string | null>(null);
+  const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2400); };
+  const filtered = mdmProfiles.filter((p) => p.vendor === vendor);
   return (
     <>
       <PageHeader
@@ -10,10 +21,20 @@ export default function PoliciesPage() {
         meta="13 signed templates · scoped rollout · rollback-on-regression"
         right={
           <div className="inline-flex rounded-md border border-unbound-border bg-white overflow-hidden text-[12px]">
-            <button className="px-3 py-1.5 bg-unbound-purple/10 text-unbound-purple font-medium">Jamf</button>
-            <button className="px-3 py-1.5 text-unbound-text-tertiary">Intune</button>
-            <button className="px-3 py-1.5 text-unbound-text-tertiary">Kandji</button>
-            <button className="px-3 py-1.5 text-unbound-text-tertiary">Workspace ONE</button>
+            {(['Jamf', 'Intune', 'Kandji', 'Workspace ONE'] as Vendor[]).map((v) => (
+              <button
+                key={v}
+                onClick={() => setVendor(v)}
+                className={cn(
+                  'px-3 py-1.5',
+                  vendor === v
+                    ? 'bg-unbound-purple/10 text-unbound-purple font-medium'
+                    : 'text-unbound-text-tertiary hover:bg-unbound-bg-hover'
+                )}
+              >
+                {v}
+              </button>
+            ))}
           </div>
         }
       />
@@ -21,7 +42,7 @@ export default function PoliciesPage() {
       <Card>
         <CardHeader
           title="Templates"
-          meta="Signed · deploy-status tracked"
+          meta={`${filtered.length} for ${vendor} · signed · deploy-status tracked`}
           right={<ShieldCheck className="w-4 h-4 text-unbound-purple" />}
         />
         <table className="w-full text-[13px]">
@@ -35,7 +56,7 @@ export default function PoliciesPage() {
             </tr>
           </thead>
           <tbody>
-            {mdmProfiles.map((p) => (
+            {filtered.map((p) => (
               <tr key={p.name} className="border-b border-unbound-border last:border-0 hover:bg-unbound-bg-hover">
                 <td className="px-5 py-3 mono text-[12.5px] text-unbound-text-primary font-medium">{p.name}</td>
                 <td className="px-3 py-3 mono text-[12px] text-unbound-text-tertiary">{p.covers}</td>
@@ -54,15 +75,26 @@ export default function PoliciesPage() {
                   </span>
                 </td>
                 <td className="px-3 py-3 text-right">
-                  <button className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
+                  <button
+                    onClick={() => showToast(`${p.name}.mobileconfig · signed · canary 10% first, then staged 100%`)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover"
+                  >
                     <Download className="w-3.5 h-3.5" /> Download
                   </button>
                 </td>
               </tr>
             ))}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-5 py-6 text-center text-unbound-text-muted">
+                  No signed templates for {vendor} yet. Vendor-specific templates ship in Q2.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </Card>
+      {toast && <Toast message={toast} kind="success" />}
     </>
   );
 }

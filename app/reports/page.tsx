@@ -1,7 +1,13 @@
+'use client';
+
+import { useState } from 'react';
 import { PageHeader, Card, CardHeader } from '@/components/Card';
-import { FileDown, FileText, Package, Users, Calendar } from 'lucide-react';
+import { FileDown, FileText, Package, Users } from 'lucide-react';
+import { Toast } from '@/components/Modal';
 
 export default function ReportsPage() {
+  const [toast, setToast] = useState<string | null>(null);
+  const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(null), 3000); };
   return (
     <>
       <PageHeader title="Reports" meta="Auditor-ready signed evidence" />
@@ -19,7 +25,7 @@ export default function ReportsPage() {
             <option>Q1 2026 (Jan 1 → Mar 31)</option>
             <option>Q4 2025</option>
           </select>
-          <button className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
+          <button onClick={() => showToast('Generating posture-Q1-2026.pdf + .pptx + .csv · signed by sha256:7d…a81c · 3s')} className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
             <FileDown className="w-3.5 h-3.5" /> Generate report
           </button>
         </div>
@@ -41,12 +47,12 @@ export default function ReportsPage() {
           </span>
         </div>
         <div className="px-5 pb-5">
-          <button className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
+          <button onClick={() => showToast('evidence-pack-SOC2-2026Q1-fleet.zip · 7 files · signed manifest · 3s')} className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
             <FileDown className="w-3.5 h-3.5" /> Generate packet
           </button>
         </div>
       </Card>
-
+      {toast && <Toast message={toast} kind="success" />}
     </>
   );
 }

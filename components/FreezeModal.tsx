@@ -4,18 +4,28 @@ import { Modal } from './Modal';
 import { AlertTriangle, Check } from 'lucide-react';
 import { useState } from 'react';
 
+export type FreezeLevel = 'read-only' | 'network-restrict' | 'full-isolate';
+
+const levelLabel: Record<FreezeLevel, string> = {
+  'read-only': 'read-only freeze',
+  'network-restrict': 'network-restrict freeze',
+  'full-isolate': 'full isolation',
+};
+
 export default function FreezeModal({
   open,
   onClose,
+  onConfirm,
   deviceId,
   user,
 }: {
   open: boolean;
   onClose: () => void;
+  onConfirm?: (info: { level: FreezeLevel; label: string; deviceId: string; user: string }) => void;
   deviceId: string;
   user: string;
 }) {
-  const [lvl, setLvl] = useState<'read-only' | 'network-restrict' | 'full-isolate'>('read-only');
+  const [lvl, setLvl] = useState<FreezeLevel>('read-only');
 
   return (
     <Modal
@@ -30,10 +40,13 @@ export default function FreezeModal({
             Cancel
           </button>
           <button
-            onClick={onClose}
+            onClick={() => {
+              onConfirm?.({ level: lvl, label: levelLabel[lvl], deviceId, user });
+              onClose();
+            }}
             className="px-3 py-1.5 text-[12px] rounded-md bg-sev-critical text-white hover:bg-sev-critical/90 font-semibold"
           >
-            Confirm freeze
+            Confirm {levelLabel[lvl]}
           </button>
         </>
       }

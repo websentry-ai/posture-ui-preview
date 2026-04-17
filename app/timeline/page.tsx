@@ -1,5 +1,9 @@
+'use client';
+
+import { useState } from 'react';
 import { PageHeader, Card, CardHeader } from '@/components/Card';
 import { FileDown } from 'lucide-react';
+import { Toast } from '@/components/Modal';
 
 const events = [
   { t: '2026-04-17 02:00', a: 'Waiver proposal', detail: 'auto-generated for F-00272 (#4 MITM on marcus.w)', actor: 'system' },
@@ -17,6 +21,8 @@ const events = [
 ];
 
 export default function Page() {
+  const [toast, setToast] = useState<string | null>(null);
+  const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2400); };
   return (
     <>
       <PageHeader
@@ -35,7 +41,7 @@ export default function Page() {
               <option>Range: Last 30 days</option>
               <option>Range: Custom…</option>
             </select>
-            <button className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
+            <button onClick={() => showToast('timeline-2026Q1.csv + .json · signed manifest · 28 events · 12 anchor hashes')} className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
               <FileDown className="w-3.5 h-3.5" /> Export
             </button>
           </div>
@@ -68,7 +74,7 @@ export default function Page() {
           </div>
         </div>
       </Card>
-
+      {toast && <Toast message={toast} kind="success" />}
     </>
   );
 }

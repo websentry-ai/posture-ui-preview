@@ -1,14 +1,20 @@
+'use client';
+
+import { useState } from 'react';
 import { PageHeader, Card, CardHeader } from '@/components/Card';
-import { Check, AlertCircle, Globe, Key, Shield, Users, Download, Rocket } from 'lucide-react';
+import { Check, Globe, Key, Shield, Users, Download, Rocket } from 'lucide-react';
+import { Toast } from '@/components/Modal';
 
 export default function Page() {
+  const [toast, setToast] = useState<string | null>(null);
+  const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2400); };
   return (
     <>
       <PageHeader
         title="Setup"
         meta="4 of 6 steps complete"
         right={
-          <button className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
+          <button onClick={() => showToast('deployment-guide-2026q2.pdf · 28 pages · MDM + SCIM + BYOK walkthroughs')} className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
             <Download className="w-3.5 h-3.5" /> Download deployment guide
           </button>
         }
@@ -39,7 +45,7 @@ export default function Page() {
           <Row icon={<Rocket className="w-4 h-4 text-unbound-purple" />} label="Shell-history scan" value="Disabled in EU · enabled US · user-level regex-filter-before-upload" />
         </div>
       </Card>
-
+      {toast && <Toast message={toast} kind="success" />}
     </>
   );
 }

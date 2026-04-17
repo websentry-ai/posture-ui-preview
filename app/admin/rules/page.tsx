@@ -1,6 +1,10 @@
+'use client';
+
+import { useState } from 'react';
 import { PageHeader, Card, CardHeader } from '@/components/Card';
 import { SevBadge } from '@/components/SevBadge';
 import { SlidersHorizontal, Play, Info } from 'lucide-react';
+import { Toast } from '@/components/Modal';
 
 const rules = [
   { id: 1, name: 'Personal account on managed device', base: 'critical' as const, fp: 1.2, fired: 47, tune: false },
@@ -16,13 +20,15 @@ const rules = [
 ];
 
 export default function Page() {
+  const [toast, setToast] = useState<string | null>(null);
+  const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2400); };
   return (
     <>
       <PageHeader
         title="Detection rules"
         meta="23 active · 2 info · FP rate · tune"
         right={
-          <button className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
+          <button onClick={() => showToast('Rule sandbox opened · paste a config to test')} className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
             <SlidersHorizontal className="w-3.5 h-3.5" /> Test a rule
           </button>
         }
@@ -62,7 +68,7 @@ export default function Page() {
                 </td>
                 <td className="px-3 py-3 text-unbound-text-tertiary">{r.fired}</td>
                 <td className="px-3 py-3 text-right">
-                  <button className="text-[11px] px-2 py-1 rounded border border-unbound-border hover:bg-unbound-bg-hover">
+                  <button onClick={() => showToast(`Ran rule #${r.id} against sample corpus · would fire on 4 / 100 configs`)} className="text-[11px] px-2 py-1 rounded border border-unbound-border hover:bg-unbound-bg-hover">
                     <Play className="w-3 h-3 inline mr-0.5" /> Test
                   </button>
                 </td>
@@ -76,6 +82,7 @@ export default function Page() {
         <Info className="w-3.5 h-3.5 shrink-0" />
         FP rate tracked via admin "Not risky" + "Override classification" actions. Published quarterly as the noise-floor SLA (target ≤ 2% on hook classification).
       </div>
+      {toast && <Toast message={toast} kind="success" />}
     </>
   );
 }

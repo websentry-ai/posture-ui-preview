@@ -1,6 +1,11 @@
+'use client';
+
+import { useState } from 'react';
 import { PageHeader, Card, CardHeader } from '@/components/Card';
 import { GitBranch, Eye } from 'lucide-react';
 import Link from 'next/link';
+import { Toast } from '@/components/Modal';
+import { cn } from '@/lib/utils';
 
 const drifts = [
   {
@@ -41,6 +46,10 @@ const drifts = [
 ];
 
 export default function Page() {
+  const [filter, setFilter] = useState<'material' | 'all'>('material');
+  const [toast, setToast] = useState<string | null>(null);
+  const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2400); };
+  const rows = filter === 'material' ? drifts.filter((d) => d.material) : drifts;
   return (
     <>
       <PageHeader
@@ -48,8 +57,8 @@ export default function Page() {
         meta="287 baselined · 12,418 signed snapshots · hourly Sigstore anchor · key sha256:7d…a81c"
         right={
           <div className="inline-flex rounded-md border border-unbound-border bg-white overflow-hidden text-[12px]">
-            <button className="px-3 py-1.5 bg-unbound-purple/10 text-unbound-purple font-medium">Material only</button>
-            <button className="px-3 py-1.5 text-unbound-text-tertiary">All drift</button>
+            <button onClick={() => setFilter('material')} className={cn('px-3 py-1.5', filter === 'material' ? 'bg-unbound-purple/10 text-unbound-purple font-medium' : 'text-unbound-text-tertiary hover:bg-unbound-bg-hover')}>Material only</button>
+            <button onClick={() => setFilter('all')} className={cn('px-3 py-1.5', filter === 'all' ? 'bg-unbound-purple/10 text-unbound-purple font-medium' : 'text-unbound-text-tertiary hover:bg-unbound-bg-hover')}>All drift</button>
           </div>
         }
       />
@@ -72,7 +81,7 @@ export default function Page() {
             </tr>
           </thead>
           <tbody>
-            {drifts.map((d, i) => (
+            {rows.map((d, i) => (
               <tr key={i} className="border-b border-unbound-border last:border-0 hover:bg-unbound-bg-hover">
                 <td className="px-5 py-3 mono text-[12px]">
                   <Link href={`/fleet/devices/${d.device}`} className="text-unbound-purple hover:underline">
@@ -93,13 +102,13 @@ export default function Page() {
                   )}
                 </td>
                 <td className="px-3 py-3 text-right space-x-1">
-                  <button className="text-[11px] px-2 py-1 rounded border border-unbound-border hover:bg-unbound-bg-hover">
+                  <button onClick={() => showToast(`Diff opened for ${d.device}`)} className="text-[11px] px-2 py-1 rounded border border-unbound-border hover:bg-unbound-bg-hover">
                     <Eye className="w-3 h-3 inline mr-0.5" /> Diff
                   </button>
-                  <button className="text-[11px] px-2 py-1 rounded border border-unbound-border hover:bg-unbound-bg-hover">
+                  <button onClick={() => showToast('Marked expected · baseline updated')} className="text-[11px] px-2 py-1 rounded border border-unbound-border hover:bg-unbound-bg-hover">
                     Mark expected
                   </button>
-                  <button className="text-[11px] px-2 py-1 rounded border border-unbound-border hover:bg-unbound-bg-hover">
+                  <button onClick={() => showToast(`${d.device} re-baselined · signed sha256:${Math.random().toString(16).slice(2, 6)}…`)} className="text-[11px] px-2 py-1 rounded border border-unbound-border hover:bg-unbound-bg-hover">
                     Re-baseline
                   </button>
                 </td>
@@ -108,7 +117,7 @@ export default function Page() {
           </tbody>
         </table>
       </Card>
-
+      {toast && <Toast message={toast} kind="success" />}
     </>
   );
 }

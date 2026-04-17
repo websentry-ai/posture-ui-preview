@@ -1,7 +1,11 @@
+'use client';
+
+import { useState } from 'react';
 import { PageHeader, Card, CardHeader } from '@/components/Card';
 import { Chip } from '@/components/SevBadge';
 import { mcpInbox } from '@/lib/mock-data';
 import { CheckCircle2, XCircle, ShieldAlert, Plus, Upload, Sparkles } from 'lucide-react';
+import { Toast } from '@/components/Modal';
 
 const approved = [
   { mcp: 'github-official', publisher: 'github (verified)', pin: '>=1.2.0', scope: 'r+w', source: 'Unbound curated' },
@@ -12,6 +16,8 @@ const approved = [
 ];
 
 export default function MCPCatalog() {
+  const [toast, setToast] = useState<string | null>(null);
+  const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2400); };
   return (
     <>
       <PageHeader
@@ -19,11 +25,11 @@ export default function MCPCatalog() {
         meta="47 approved · 38 Unbound curated · 9 your org · 3 inbox"
         right={
           <div className="flex items-center gap-2">
-            <button className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md border border-unbound-border bg-white hover:bg-unbound-bg-hover">
+            <button onClick={() => showToast('Select catalog JSON to import')} className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md border border-unbound-border bg-white hover:bg-unbound-bg-hover">
               <Upload className="w-3.5 h-3.5" />
               Import JSON
             </button>
-            <button className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
+            <button onClick={() => showToast('Add-MCP form opened')} className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
               <Plus className="w-3.5 h-3.5" />
               Add MCP
             </button>
@@ -58,13 +64,13 @@ export default function MCPCatalog() {
                   </div>
                 </div>
                 <div className="flex gap-1.5">
-                  <button className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] rounded-md bg-sev-low-bg text-sev-low border border-sev-low/30 hover:bg-sev-low/10">
+                  <button onClick={() => showToast(`Approved ${m.name} · added to catalog · auto-pin to current version`)} className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] rounded-md bg-sev-low-bg text-sev-low border border-sev-low/30 hover:bg-sev-low/10">
                     <CheckCircle2 className="w-3.5 h-3.5" /> Approve
                   </button>
-                  <button className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] rounded-md bg-sev-critical-bg text-sev-critical border border-sev-critical/30 hover:bg-sev-critical/10">
+                  <button onClick={() => showToast(`Rejected ${m.name} · 4 devices will be notified to remove`)} className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] rounded-md bg-sev-critical-bg text-sev-critical border border-sev-critical/30 hover:bg-sev-critical/10">
                     <XCircle className="w-3.5 h-3.5" /> Reject
                   </button>
-                  <button className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] rounded-md border border-unbound-border bg-white hover:bg-unbound-bg-hover">
+                  <button onClick={() => showToast(`Quarantined ${m.name} · tools auto-disabled until review`)} className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] rounded-md border border-unbound-border bg-white hover:bg-unbound-bg-hover">
                     Quarantine
                   </button>
                 </div>
@@ -126,6 +132,7 @@ export default function MCPCatalog() {
           </tbody>
         </table>
       </Card>
+      {toast && <Toast message={toast} kind="success" />}
     </>
   );
 }

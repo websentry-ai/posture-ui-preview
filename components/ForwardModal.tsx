@@ -7,11 +7,13 @@ import { Copy } from 'lucide-react';
 export default function ForwardModal({
   open,
   onClose,
+  onConfirm,
   user,
   body,
 }: {
   open: boolean;
   onClose: () => void;
+  onConfirm?: (info: { channel: string; deadline: string; user: string }) => void;
   user: string;
   body: string;
 }) {
@@ -49,7 +51,13 @@ export default function ForwardModal({
           >
             <Copy className="w-3.5 h-3.5" /> Copy
           </button>
-          <button onClick={onClose} className="px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
+          <button
+            onClick={() => {
+              onConfirm?.({ channel, deadline, user });
+              onClose();
+            }}
+            className="px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover"
+          >
             Send
           </button>
         </>

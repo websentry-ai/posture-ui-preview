@@ -1,23 +1,41 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { findings } from '@/lib/mock-data';
 import type { Finding } from '@/lib/mock-data';
 import { PageHeader } from '@/components/Card';
 import { SevBadge, Chip } from '@/components/SevBadge';
 import IssueDrawer from '@/components/IssueDrawer';
 import { Toast } from '@/components/Modal';
-import { ChevronDown, ChevronRight, Filter, Save, Command as CmdIcon, Upload } from 'lucide-react';
+import { ChevronDown, ChevronRight, Filter, Upload, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type TabState = 'open' | 'triage' | 'waived' | 'closed';
 
 export default function IssuesPage() {
+  return (
+    <Suspense fallback={null}>
+      <IssuesPageInner />
+    </Suspense>
+  );
+}
+
+function IssuesPageInner() {
+  const searchParams = useSearchParams();
+  const ruleFilter = searchParams.get('rule');
   const [openFinding, setOpenFinding] = useState<Finding | null>(null);
   const [expanded, setExpanded] = useState<Record<number, boolean>>({ 2: true, 4: true, 22: true });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [tab, setTab] = useState<TabState>('open');
   const [toast, setToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (ruleFilter) {
+      const id = Number(ruleFilter);
+      setExpanded({ [id]: true });
+    }
+  }, [ruleFilter]);
 
   const showToast = (m: string) => {
     setToast(m);
@@ -39,10 +57,11 @@ export default function IssuesPage() {
   }, [openFinding]);
 
   const visible = useMemo(() => {
-    // In this preview, all findings are 'open'. Other tabs show mocked counts but empty states.
-    if (tab === 'open') return findings;
-    return [];
-  }, [tab]);
+    if (tab !== 'open') return [];
+    if (!ruleFilter) return findings;
+    const id = Number(ruleFilter);
+    return findings.filter((f) => f.ruleId === id);
+  }, [tab, ruleFilter]);
 
   const groups = useMemo(() => {
     const g: Record<number, Finding[]> = {};
@@ -95,23 +114,15 @@ export default function IssuesPage() {
     <>
       <PageHeader
         title="Issues"
-        meta={`${findings.length} open · shortcuts ?`}
+        meta={ruleFilter ? `Filtered to #${ruleFilter}` : `${findings.length} open`}
         right={
           <div className="flex items-center gap-2">
-            <button className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md border border-unbound-border bg-white hover:bg-unbound-bg-hover">
-              <Save className="w-3.5 h-3.5" />
-              Saved views
-              <ChevronDown className="w-3.5 h-3.5" />
-            </button>
             <button
               onClick={() => showToast('Exported CSV with finding ledger + control mapping')}
               className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md border border-unbound-border bg-white hover:bg-unbound-bg-hover"
             >
               <Upload className="w-3.5 h-3.5" />
               Export
-            </button>
-            <button className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md bg-unbound-text-primary text-white">
-              <CmdIcon className="w-3.5 h-3.5" />K
             </button>
           </div>
         }
@@ -144,30 +155,25 @@ export default function IssuesPage() {
 
       {/* filter bar */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <div className="inline-flex items-center gap-1 px-2 py-1 text-[12px] rounded-md bg-unbound-purple/10 text-unbound-purple">
-          severity: Critical, High
-          <button className="ml-1 opacity-70 hover:opacity-100">×</button>
-        </div>
-        <div className="inline-flex items-center gap-1 px-2 py-1 text-[12px] rounded-md bg-unbound-purple/10 text-unbound-purple">
-          assigned: me
-          <button className="ml-1 opacity-70 hover:opacity-100">×</button>
-        </div>
-        <div className="inline-flex items-center gap-1 px-2 py-1 text-[12px] rounded-md bg-unbound-purple/10 text-unbound-purple">
-          first-seen: 7d
-          <button className="ml-1 opacity-70 hover:opacity-100">×</button>
-        </div>
-        <button className="inline-flex items-center gap-1 px-2 py-1 text-[12px] rounded-md border border-dashed border-unbound-border text-unbound-text-tertiary hover:text-unbound-text-primary">
+        <FilterChip label="severity: Critical, High" onRemove={() => showToast('Filter removed')} />
+        <FilterChip label="assigned: me" onRemove={() => showToast('Filter removed')} />
+        <FilterChip label="first-seen: 7d" onRemove={() => showToast('Filter removed')} />
+        {ruleFilter && (
+          <a
+            href="/issues"
+            className="inline-flex items-center gap-1 px-2 py-1 text-[12px] rounded-md bg-unbound-purple text-white"
+          >
+            rule: #{ruleFilter}
+            <span className="ml-1 opacity-70 hover:opacity-100">×</span>
+          </a>
+        )}
+        <button
+          onClick={() => showToast('Filter builder — coming soon')}
+          className="inline-flex items-center gap-1 px-2 py-1 text-[12px] rounded-md border border-dashed border-unbound-border text-unbound-text-tertiary hover:text-unbound-text-primary"
+        >
           <Filter className="w-3 h-3" />
           + filter
         </button>
-        <div className="flex-1" />
-        <div className="inline-flex items-center gap-2 text-[12px] text-unbound-text-tertiary">
-          <span>Sort: severity × escalators</span>
-          <span>·</span>
-          <span>Group by: finding type</span>
-          <span>·</span>
-          <span>View: by type</span>
-        </div>
       </div>
 
       {visible.length === 0 && (
@@ -223,6 +229,7 @@ export default function IssuesPage() {
                         <th className="px-3 py-2 font-medium">First seen</th>
                         <th className="px-3 py-2 font-medium">Escalators</th>
                         <th className="px-3 py-2 font-medium">SLA</th>
+                        <th className="px-3 py-2 font-medium w-20"></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -230,7 +237,7 @@ export default function IssuesPage() {
                         <tr
                           key={f.id}
                           onClick={() => openAt(f)}
-                          className="border-t border-unbound-border cursor-pointer hover:bg-white"
+                          className="border-t border-unbound-border cursor-pointer hover:bg-white group"
                         >
                           <td className="px-5 py-2" onClick={(e) => e.stopPropagation()}>
                             <input
@@ -260,6 +267,11 @@ export default function IssuesPage() {
                             )}
                           >
                             {f.slaLabel}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] rounded border border-unbound-border text-unbound-purple opacity-0 group-hover:opacity-100 transition">
+                              Open <ExternalLink className="w-3 h-3" />
+                            </span>
                           </td>
                         </tr>
                       ))}
@@ -319,5 +331,14 @@ export default function IssuesPage() {
       />
       {toast && <Toast message={toast} kind="success" />}
     </>
+  );
+}
+
+function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <div className="inline-flex items-center gap-1 px-2 py-1 text-[12px] rounded-md bg-unbound-purple/10 text-unbound-purple">
+      {label}
+      <button onClick={onRemove} className="ml-1 opacity-70 hover:opacity-100">×</button>
+    </div>
   );
 }

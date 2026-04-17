@@ -21,6 +21,7 @@ import {
   Plug,
   Cog,
   ShieldCheck,
+  BadgeCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -62,6 +63,7 @@ const sections: Section[] = [
   {
     title: 'Admin',
     items: [
+      { href: '/admin/trust', label: 'Trust center', icon: BadgeCheck },
       { href: '/admin/catalogs/mcp', label: 'Catalogs', icon: BookMarked },
       { href: '/admin/rules', label: 'Detection Rules', icon: SlidersHorizontal },
       { href: '/admin/suppressions', label: 'Suppressions', icon: EyeOff },
