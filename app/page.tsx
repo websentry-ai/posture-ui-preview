@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import { Card, CardHeader, PageHeader } from '@/components/Card';
 import { SevBadge, Chip } from '@/components/SevBadge';
@@ -5,16 +8,17 @@ import {
   ArrowDown,
   ArrowUp,
   AlertTriangle,
-  CheckCircle2,
-  RotateCcw,
-  Package,
   ShieldAlert,
-  GitBranch,
+  EyeOff,
+  Eye,
+  Clock3,
   ChevronRight,
   FileDown,
   Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { fleet, severityCounts, findings } from '@/lib/mock-data';
+import BreakChainModal from '@/components/BreakChainModal';
 
 function DeltaTile({
   label,
@@ -56,17 +60,20 @@ function DeltaTile({
 }
 
 export default function Overview() {
+  const sev = severityCounts(findings);
+  const [chainOpen, setChainOpen] = useState<null | { chain: string; devices: string[] }>(null);
+
   return (
     <>
       <PageHeader
         title="Posture Overview"
-        subtitle="Mon Apr 20 2026 · 09:00 UTC · Fleet 4,218 devices · 7 agents detected · Coverage 94.6% · Last scan 38 min ago"
+        subtitle={`Mon Apr 20 2026 · 09:00 UTC · Fleet ${fleet.total} managed · ${fleet.unmanaged} unmanaged · Coverage ${fleet.coveragePct}% · Last scan 38 min ago`}
         right={
           <div className="flex gap-2">
             <div className="inline-flex rounded-md border border-unbound-border bg-white overflow-hidden text-[12px]">
-              <button className="px-3 py-1.5 text-unbound-text-tertiary">Day</button>
+              <button className="px-3 py-1.5 text-unbound-text-tertiary hover:bg-unbound-bg-hover">Day</button>
               <button className="px-3 py-1.5 bg-unbound-purple/10 text-unbound-purple font-medium">Week</button>
-              <button className="px-3 py-1.5 text-unbound-text-tertiary">Month</button>
+              <button className="px-3 py-1.5 text-unbound-text-tertiary hover:bg-unbound-bg-hover">Month</button>
             </div>
             <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
               <FileDown className="w-3.5 h-3.5" />
@@ -83,16 +90,77 @@ export default function Overview() {
           subtitle="Trend vs last-week snapshot — click any tile to drill in"
         />
         <div className="grid grid-cols-4 gap-0 divide-x divide-unbound-border">
-          <DeltaTile label="Critical" value={14} delta="+3" deltaDir="up" href="/issues" />
-          <DeltaTile label="High" value={59} delta="+12" deltaDir="up" href="/issues" />
-          <DeltaTile label="Closed" value={8} delta="-8" deltaDir="down" href="/issues" />
-          <DeltaTile label="Reopened" value={2} delta="+2" deltaDir="up" href="/issues" />
+          <DeltaTile label="Critical" value={sev.critical} delta="+1" deltaDir="up" href="/issues?sev=critical" />
+          <DeltaTile label="High" value={sev.high} delta="+2" deltaDir="up" href="/issues?sev=high" />
+          <DeltaTile label="Closed" value={3} delta="-3" deltaDir="down" href="/issues?state=closed" />
+          <DeltaTile label="Reopened" value={1} delta="+1" deltaDir="up" href="/issues?state=open" />
         </div>
         <div className="grid grid-cols-4 gap-0 divide-x divide-t divide-unbound-border border-t border-unbound-border">
-          <DeltaTile label="New MCPs" value={4} delta="2 unvetted" deltaDir="up" href="/admin/catalogs/mcp" />
+          <DeltaTile label="New MCPs" value={3} delta="2 unvetted" deltaDir="up" href="/admin/catalogs/mcp" />
           <DeltaTile label="New CAs" value={1} delta="in catalog" deltaDir="flat" />
-          <DeltaTile label="New hooks" value={0} delta="flat" deltaDir="flat" />
-          <DeltaTile label="Drift events" value={17} delta="+17" deltaDir="up" />
+          <DeltaTile label="New hooks" value={1} delta="malicious" deltaDir="up" />
+          <DeltaTile label="Drift events" value={4} delta="+4" deltaDir="up" href="/drift" />
+        </div>
+      </Card>
+
+      {/* FLEET VISIBILITY — the CISO buy trigger */}
+      <Card className="mb-5 border-sev-medium/40">
+        <CardHeader
+          title="Fleet visibility — who we can see, who we can't"
+          subtitle="The dark fleet is where breaches live. Every unknown device is a finding waiting to happen."
+          right={<EyeOff className="w-4 h-4 text-sev-medium" />}
+        />
+        <div className="grid grid-cols-4 gap-0 divide-x divide-unbound-border">
+          <CoverageTile
+            icon={<Eye className="w-4 h-4 text-sev-low" />}
+            label="Scanner installed"
+            value={fleet.scannerInstalled}
+            caption="Healthy scan in last 24h"
+            href="/fleet/devices"
+          />
+          <CoverageTile
+            icon={<Clock3 className="w-4 h-4 text-sev-medium" />}
+            label="Scanner stale"
+            value={fleet.scannerStale}
+            caption=">24h since last check-in"
+            href="/fleet/devices"
+          />
+          <CoverageTile
+            icon={<EyeOff className="w-4 h-4 text-sev-critical" />}
+            label="No scanner installed"
+            value={fleet.unmanaged - 167 + 167}
+            caption="Dark fleet · enrol via MDM"
+            href="/admin/setup"
+          />
+          <CoverageTile
+            icon={<AlertTriangle className="w-4 h-4 text-sev-high" />}
+            label="Total blind"
+            value={fleet.unmanaged}
+            caption="Cannot assess risk"
+            href="/fleet/devices"
+          />
+        </div>
+        <div className="grid grid-cols-3 gap-0 divide-x divide-t divide-unbound-border border-t border-unbound-border">
+          {fleet.scanners.map((s) => (
+            <div key={s.agent} className="p-4">
+              <div className="text-[11px] uppercase tracking-wide text-unbound-text-muted">{s.agent} scanner</div>
+              <div className="flex items-baseline justify-between mt-1">
+                <div className="text-[14px] font-semibold text-unbound-text-primary">
+                  {s.devices} <span className="text-[12px] font-normal text-unbound-text-tertiary">devices</span>
+                </div>
+                <span
+                  className={cn(
+                    'text-[11px] px-2 py-0.5 rounded-full',
+                    s.status === 'healthy'
+                      ? 'bg-sev-low-bg text-sev-low border border-sev-low/20'
+                      : 'bg-sev-high-bg text-sev-high border border-sev-high/20'
+                  )}
+                >
+                  {s.lastScan}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       </Card>
 
@@ -107,7 +175,7 @@ export default function Overview() {
                 <span>Critical &gt; 24h unresolved</span>
               </div>
               <Link href="/issues" className="flex items-center gap-1 font-semibold text-sev-critical">
-                2 <ChevronRight className="w-3.5 h-3.5" />
+                1 <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </div>
             <div className="flex items-center justify-between">
@@ -116,7 +184,7 @@ export default function Overview() {
                 <span>High &gt; 7d unresolved</span>
               </div>
               <Link href="/issues" className="flex items-center gap-1 font-semibold text-sev-high">
-                19 <ChevronRight className="w-3.5 h-3.5" />
+                0 <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </div>
             <div className="flex items-center justify-between">
@@ -143,17 +211,17 @@ export default function Overview() {
               <span>Expiring ≤ 30 days</span>
               <span className="font-semibold">23</span>
             </div>
-            <div className="p-3 rounded-md bg-sev-critical-bg border border-sev-critical/20 text-[12px]">
+            <Link href="/admin/suppressions" className="block p-3 rounded-md bg-sev-critical-bg border border-sev-critical/20 hover:bg-sev-critical-bg/80">
               <div className="flex items-start gap-2">
                 <ShieldAlert className="w-4 h-4 text-sev-critical shrink-0 mt-0.5" />
-                <div>
+                <div className="text-[12px]">
                   <div className="font-semibold text-sev-critical">Waiver anomaly</div>
                   <div className="text-unbound-text-secondary mt-0.5">
-                    91% of QA fleet has #2 YOLO waived (3,847 / 4,218). Review — this may be a mute, not accepted risk.
+                    91% of QA BU (96 / 105 devices) has "#2 YOLO" waived. Approver: j.kim — 84% of those waivers granted on a single Friday. Likely a mute, not accepted risk. Click to review.
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
           </div>
         </Card>
       </div>
@@ -180,8 +248,8 @@ export default function Overview() {
                 { n: 1, u: 'sarah.chen', bu: 'Eng-Platform', sev: '3C / 5H', esc: ['cloud creds', 'admin', 'prod repos'], s: 'critical' as const, id: 'HGXF2XKH45' },
                 { n: 2, u: 'devtest-3', bu: 'QA', sev: '2C / 1H', esc: ['IMDS reach', 'no sandbox'], s: 'critical' as const, id: 'K43J9S77Z0' },
                 { n: 3, u: 'marcus.w', bu: 'Finance', sev: '1C / 7H', esc: ['BYOD', 'corp repos', 'MITM CA'], s: 'critical' as const, id: 'PQ77XABC92' },
-                { n: 4, u: 'raj.patel', bu: 'Eng-AI', sev: '1C / 4H', esc: ['personal acct', 'admin'], s: 'high' as const, id: 'LMQP9P1QV2' },
-                { n: 5, u: 'jenna.l', bu: 'DevOps', sev: '0C / 9H', esc: ['broad bash', 'hooks', 'no policy'], s: 'high' as const, id: 'TTY4X0ABCD' },
+                { n: 4, u: 'raj.patel', bu: 'Eng-AI', sev: '1C / 2H', esc: ['personal acct', 'admin'], s: 'critical' as const, id: 'LMQP9P1QV2' },
+                { n: 5, u: 'jenna.l', bu: 'DevOps', sev: '1C / 8H', esc: ['hook!', 'MCP!', 'no-policy'], s: 'critical' as const, id: 'TTY4X0ABCD' },
               ].map((r) => (
                 <tr key={r.n} className="border-b border-unbound-border last:border-0 hover:bg-unbound-bg-hover">
                   <td className="px-5 py-3 text-unbound-text-muted">{r.n}</td>
@@ -211,7 +279,13 @@ export default function Overview() {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <SevBadge severity="critical">3 devices</SevBadge>
-                <button className="text-[11px] text-unbound-purple font-semibold hover:underline">
+                <button
+                  onClick={() => setChainOpen({
+                    chain: 'YOLO → sandbox-off → cloud-creds → prod-git-write',
+                    devices: ['sarah.chen', 'raj.patel', 'devtest-3'],
+                  })}
+                  className="text-[11px] text-unbound-purple font-semibold hover:underline"
+                >
                   Break chain
                 </button>
               </div>
@@ -224,7 +298,13 @@ export default function Overview() {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <SevBadge severity="critical">1 device</SevBadge>
-                <button className="text-[11px] text-unbound-purple font-semibold hover:underline">
+                <button
+                  onClick={() => setChainOpen({
+                    chain: 'personal-acct → corp-repos → no-DLP',
+                    devices: ['marcus.w'],
+                  })}
+                  className="text-[11px] text-unbound-purple font-semibold hover:underline"
+                >
                   Break chain
                 </button>
               </div>
@@ -256,11 +336,16 @@ export default function Overview() {
             { fw: 'NIST CSF 2.0', pct: 78 },
             { fw: 'SOC 2 Type II', pct: 71 },
             { fw: 'ISO 27001:2022', pct: 94 },
-            { fw: 'FedRAMP Mod', pct: 23 },
+            { fw: 'FedRAMP Mod', pct: 23, note: 'opt-in · not enrolled' },
           ].map((c) => (
             <Link key={c.fw} href="/compliance/controls" className="block group">
               <div className="flex items-center justify-between mb-2">
-                <div className="text-[13px] font-medium text-unbound-text-primary">{c.fw}</div>
+                <div>
+                  <div className="text-[13px] font-medium text-unbound-text-primary">{c.fw}</div>
+                  {c.note && (
+                    <div className="text-[10px] text-unbound-text-muted uppercase tracking-wider">{c.note}</div>
+                  )}
+                </div>
                 <div className="text-[13px] font-semibold text-unbound-text-primary">{c.pct}%</div>
               </div>
               <div className="h-2 rounded-full bg-unbound-bg overflow-hidden">
@@ -276,6 +361,38 @@ export default function Overview() {
           ))}
         </div>
       </Card>
+
+      <BreakChainModal
+        open={!!chainOpen}
+        onClose={() => setChainOpen(null)}
+        chain={chainOpen?.chain ?? ''}
+        devices={chainOpen?.devices ?? []}
+      />
     </>
+  );
+}
+
+function CoverageTile({
+  icon,
+  label,
+  value,
+  caption,
+  href,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: number | string;
+  caption: string;
+  href?: string;
+}) {
+  return (
+    <Link href={href ?? '#'} className="block p-4 hover:bg-unbound-bg-hover transition">
+      <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-unbound-text-muted">
+        {icon}
+        {label}
+      </div>
+      <div className="text-[22px] font-semibold text-unbound-text-primary mt-1">{value}</div>
+      <div className="text-[11.5px] text-unbound-text-tertiary mt-0.5">{caption}</div>
+    </Link>
   );
 }

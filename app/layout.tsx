@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter, Fira_Code } from 'next/font/google';
 import './globals.css';
 import Sidebar from '@/components/Sidebar';
+import TenantStrip from '@/components/TenantStrip';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -26,8 +27,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen">
         <div className="flex">
           <Sidebar />
-          <main className="flex-1 min-w-0">
-            <div className="max-w-[1400px] mx-auto px-6 py-6">{children}</div>
+          <main className="flex-1 min-w-0 flex flex-col">
+            <TenantStrip />
+            <div className="max-w-[1400px] w-full mx-auto px-6 py-6">{children}</div>
           </main>
         </div>
       </body>

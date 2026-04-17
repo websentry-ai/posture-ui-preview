@@ -1,5 +1,42 @@
 import type { Severity } from './utils';
 
+export const tenant = {
+  org: 'Unbound Security',
+  region: 'us-east-1',
+  retention: '13 months',
+  classifier: 'local (no data egress)',
+  signingKey: 'sha256:7d…a81c',
+  rbac: 'RBAC · SSO via Okta · SCIM live',
+  privacy: 'EU residency available · works-council disclosure ready',
+};
+
+export const fleet = {
+  managed: 487,
+  byod: 15,
+  ciRunners: 37,
+  unmanaged: 228,
+  scannerInstalled: 472,
+  scannerStale: 61,
+  total: 487,
+  coveragePct: 86.7,
+  // per agent scan freshness
+  scanners: [
+    { agent: 'Claude Code', devices: 312, lastScan: '2h 14m ago', status: 'healthy' as const },
+    { agent: 'Cursor', devices: 201, lastScan: '4d 6h ago', status: 'stale' as const },
+    { agent: 'Codex', devices: 89, lastScan: '38m ago', status: 'healthy' as const },
+  ],
+};
+
+export type Classification = {
+  class: string;
+  reasoning: string;
+  model: string;
+  version: string;
+  confidence: number;
+  reviewedBy: string;
+  timestamp: string;
+};
+
 export type Finding = {
   id: string;
   ruleId: number;
@@ -13,7 +50,7 @@ export type Finding = {
   slaLabel: string;
   slaBreach?: boolean;
   escalators: string[];
-  classification?: { class: string; reasoning: string };
+  classification?: Classification;
   evidence: { path: string; lines: { n: number; text: string }[] }[];
   attack: string[];
   userFix: string;
@@ -21,6 +58,7 @@ export type Finding = {
   compliance: { framework: string; controls: string }[];
   history: { t: string; event: string }[];
   related: { id: string; title: string; severity: Severity }[];
+  state?: 'open' | 'triage' | 'waived' | 'closed';
 };
 
 export const findings: Finding[] = [
@@ -36,6 +74,7 @@ export const findings: Finding[] = [
     firstSeen: '2h ago',
     slaLabel: '4h 12m left',
     escalators: ['cloud-creds', 'admin-rights', 'prod-repos'],
+    state: 'open',
     evidence: [
       {
         path: '~/.claude/settings.json',
@@ -92,6 +131,7 @@ export const findings: Finding[] = [
     firstSeen: '18h ago',
     slaLabel: '22h left',
     escalators: ['byod', 'corp-repos', 'cert-unfamiliar'],
+    state: 'open',
     evidence: [
       {
         path: '~/.zshrc · line 18',
@@ -106,7 +146,7 @@ export const findings: Finding[] = [
     ],
     attack: [
       'ANTHROPIC_BASE_URL env var reroutes all Claude traffic',
-      'Installed CA makes attacker proxy\'s fake cert look trusted',
+      "Installed CA makes attacker proxy's fake cert look trusted",
       'Every prompt (source, secrets) flows through attacker + tool calls injected',
     ],
     userFix:
@@ -140,6 +180,7 @@ export const findings: Finding[] = [
     firstSeen: '14h ago',
     slaLabel: '10h left',
     escalators: ['cloud-creds', 'no-sandbox'],
+    state: 'open',
     evidence: [
       {
         path: '~/.codex/config.toml',
@@ -178,7 +219,7 @@ export const findings: Finding[] = [
     id: 'F-00281',
     ruleId: 1,
     title: 'Personal account on managed device',
-    severity: 'high',
+    severity: 'critical',
     agent: 'Claude Code',
     user: 'raj.patel',
     bu: 'Eng-AI',
@@ -186,7 +227,8 @@ export const findings: Finding[] = [
     firstSeen: '1d ago',
     slaLabel: 'BREACH',
     slaBreach: true,
-    escalators: ['corp-repos'],
+    escalators: ['corp-repos', 'prompts-to-consumer-acct'],
+    state: 'open',
     evidence: [
       {
         path: '~/.claude/.credentials.json',
@@ -228,10 +270,16 @@ export const findings: Finding[] = [
     firstSeen: '2d ago',
     slaLabel: '3d left',
     escalators: ['write-tools', 'unpinned'],
+    state: 'open',
     classification: {
       class: 'SUPPLY-CHAIN / unpinned + unknown publisher',
       reasoning:
         'Package unofficial-gh-mcp is 14 days old, 99 total downloads, no GitHub repo linked. Tools include gh_create_issue, gh_push_commit, gh_delete_branch — write-capable. `@latest` pin means any future version runs automatically.',
+      model: 'classifier-ensemble-v3',
+      version: 'unbound-supplychain-2026.04',
+      confidence: 0.91,
+      reviewedBy: 'Auto-classified · not yet human-reviewed',
+      timestamp: '2026-04-14 11:03 UTC',
     },
     evidence: [
       {
@@ -277,6 +325,7 @@ export const findings: Finding[] = [
     firstSeen: '2h ago',
     slaLabel: '6d left',
     escalators: ['empty-denylist'],
+    state: 'open',
     evidence: [
       {
         path: '~/.claude/settings.json',
@@ -312,7 +361,7 @@ export const findings: Finding[] = [
     id: 'F-00301',
     ruleId: 9,
     title: 'Shell-executing hook (classified: malicious)',
-    severity: 'high',
+    severity: 'critical',
     agent: 'Claude Code',
     user: 'jenna.l',
     bu: 'DevOps',
@@ -320,10 +369,16 @@ export const findings: Finding[] = [
     firstSeen: '5h ago',
     slaLabel: '5d left',
     escalators: ['project-level', 'remote-fetch'],
+    state: 'open',
     classification: {
       class: 'MALICIOUS / RCE',
       reasoning:
         'Pipes remote content directly to a shell. Remote content is arbitrary and can change between runs. Classic RCE pattern.',
+      model: 'classifier-ensemble-v3',
+      version: 'unbound-hook-2026.04',
+      confidence: 0.97,
+      reviewedBy: 'Auto-classified · flagged for human review',
+      timestamp: '2026-04-15 18:00 UTC',
     },
     evidence: [
       {
@@ -361,10 +416,22 @@ export const findings: Finding[] = [
   },
 ];
 
+// Compute severity counts from findings so every page agrees
+export function severityCounts(list: Finding[] = findings) {
+  const out = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+  for (const f of list) (out as any)[f.severity]++;
+  return out;
+}
+
 export const devices = [
   {
     id: 'HGXF2XKH45',
     user: 'sarah.chen',
+    role: 'Staff Engineer, Eng-Platform',
+    manager: 'alex.rivera',
+    location: 'San Francisco, US',
+    onCall: 'yes — P2 rotation this week',
+    lastLogin: '12 min ago · SF corp IP',
     bu: 'Eng-Platform',
     risk: '3C / 5H',
     severity: 'critical' as Severity,
@@ -372,23 +439,35 @@ export const devices = [
     lastSync: '2h',
     drift: '●●●',
     mdm: 'Jamf',
+    os: 'macOS 15.2 · MacBook Pro M3',
     chips: ['YOLO', 'SBoff', 'pers.acct', 'drift:3'],
   },
   {
     id: 'LMQP9P1QV2',
     user: 'raj.patel',
+    role: 'Senior Engineer, Eng-AI',
+    manager: 'priya.shah',
+    location: 'Austin, US',
+    onCall: 'no',
+    lastLogin: '3h ago · Austin corp IP',
     bu: 'Eng-AI',
-    risk: '0 / 2H',
-    severity: 'high' as Severity,
+    risk: '1C / 2H',
+    severity: 'critical' as Severity,
     agents: 'Cursor',
     lastSync: '1d',
     drift: '—',
     mdm: 'Jamf',
+    os: 'macOS 15.1 · MacBook Pro M2',
     chips: ['pers.acct'],
   },
   {
     id: 'K43J9S77Z0',
     user: 'devtest-3',
+    role: 'Service account · QA shared',
+    manager: 'QA team',
+    location: 'Dublin, EU',
+    onCall: 'n/a',
+    lastLogin: '6h ago · Dublin office',
     bu: 'QA',
     risk: '2C / 1H',
     severity: 'critical' as Severity,
@@ -396,40 +475,53 @@ export const devices = [
     lastSync: '6h',
     drift: '●',
     mdm: 'BYOD',
+    os: 'Ubuntu 24.04 · Dell XPS',
     chips: ['IMDS', 'SBoff'],
   },
   {
     id: 'PQ77XABC92',
     user: 'marcus.w',
+    role: 'Finance Systems Lead',
+    manager: 'nadia.q',
+    location: 'London, UK',
+    onCall: 'no',
+    lastLogin: '1d ago · London home',
     bu: 'Finance',
     risk: '1C / 7H',
     severity: 'critical' as Severity,
     agents: 'Claude',
     lastSync: '18h',
     drift: '●●',
-    mdm: 'None',
+    mdm: 'None (BYOD)',
+    os: 'macOS 14.4 · MBA M2',
     chips: ['CA!', 'BYOD', 'corp-repos'],
   },
   {
     id: 'TTY4X0ABCD',
     user: 'jenna.l',
+    role: 'DevOps Engineer',
+    manager: 'kumar.v',
+    location: 'Bangalore, IN',
+    onCall: 'yes — P1 rotation',
+    lastLogin: '23 min ago · Bangalore office',
     bu: 'DevOps',
-    risk: '0 / 9H',
-    severity: 'high' as Severity,
+    risk: '1C / 8H',
+    severity: 'critical' as Severity,
     agents: 'Claude, Cursor',
     lastSync: '5h',
     drift: '●●',
     mdm: 'Intune',
+    os: 'Windows 11 · ThinkPad X1',
     chips: ['hook!', 'MCP!', 'no-policy'],
   },
 ];
 
 export const heatmap = [
-  { bu: 'Eng-Platform', c: 3, h: 12, m: 18, l: 5, waived: 4, mttr: '2.1d' },
-  { bu: 'Eng-AI', c: 1, h: 7, m: 11, l: 3, waived: 0, mttr: '1.2d' },
-  { bu: 'Finance', c: 1, h: 4, m: 6, l: 0, waived: 8, mttr: '4.7d' },
-  { bu: 'QA', c: 2, h: 3, m: 7, l: 0, waived: 0, mttr: '0.8d' },
-  { bu: 'DevOps', c: 0, h: 9, m: 4, l: 2, waived: 2, mttr: '3.4d' },
+  { bu: 'Eng-Platform', c: 2, h: 2, m: 1, l: 0, waived: 4, mttr: '2.1d' },
+  { bu: 'Eng-AI', c: 1, h: 0, m: 0, l: 0, waived: 0, mttr: '1.2d' },
+  { bu: 'Finance', c: 1, h: 0, m: 0, l: 0, waived: 8, mttr: '4.7d' },
+  { bu: 'QA', c: 1, h: 0, m: 0, l: 0, waived: 0, mttr: '0.8d' },
+  { bu: 'DevOps', c: 1, h: 1, m: 0, l: 0, waived: 2, mttr: '3.4d' },
 ];
 
 export const mcpInbox = [
@@ -465,21 +557,77 @@ export const mcpInbox = [
   },
 ];
 
-export const controls = [
-  { id: 'PR.AA-01', name: 'Identity proofing', status: 'Compliant', count: 12, trend: '─' },
-  { id: 'PR.AA-05', name: 'Access enforcement', status: '3 High open', count: 3, trend: '▲', findings: '#1 · #19 · #20' },
-  { id: 'PR.DS-02', name: 'Data in transit', status: '1 Critical open', count: 1, trend: '▼', findings: '#4' },
-  { id: 'PR.PS-01', name: 'Baseline config', status: '6 High open', count: 6, trend: '▲', findings: '#2 · #3 · #10 · #11 · #22 · #25' },
-  { id: 'DE.CM-06', name: 'External service monitoring', status: '2 High open', count: 2, trend: '─', findings: '#2 · #9' },
-  { id: 'ID.SC-02', name: 'Supplier risk assessment', status: '4 High open', count: 4, trend: '▲', findings: '#6 · #7 · #18 · #24' },
-];
+export const controls = {
+  'NIST CSF 2.0': [
+    { id: 'PR.AA-01', name: 'Identity proofing', status: 'Compliant', count: 12, trend: '─', findings: '' },
+    { id: 'PR.AA-05', name: 'Access enforcement', status: '1 Critical open', count: 1, trend: '▲', findings: '#1' },
+    { id: 'PR.DS-02', name: 'Data in transit', status: '1 Critical open', count: 1, trend: '▼', findings: '#4' },
+    { id: 'PR.PS-01', name: 'Baseline config', status: '3 High / 2 Critical', count: 5, trend: '▲', findings: '#2 · #3 · #10 · #11 · #22' },
+    { id: 'DE.CM-06', name: 'External service monitoring', status: '1 Critical · 1 High', count: 2, trend: '─', findings: '#2 · #9' },
+    { id: 'ID.SC-02', name: 'Supplier risk assessment', status: '1 High open', count: 1, trend: '▲', findings: '#6' },
+    { id: 'PR.IR-01', name: 'Network integrity', status: '1 Critical open', count: 1, trend: '─', findings: '#22' },
+  ],
+  'SOC 2': [
+    { id: 'CC6.1', name: 'Logical access', status: '1 Critical open', count: 1, trend: '▲', findings: '#1' },
+    { id: 'CC6.6', name: 'Encryption + network', status: '1 Critical open', count: 1, trend: '─', findings: '#22' },
+    { id: 'CC6.7', name: 'Secure data transmission', status: '1 Critical open', count: 1, trend: '▼', findings: '#4' },
+    { id: 'CC7.1', name: 'Detection of unauthorized changes', status: '2 findings open', count: 2, trend: '▲', findings: '#2 · #8' },
+    { id: 'CC8.1', name: 'Change management', status: '2 findings open', count: 2, trend: '─', findings: '#2 · #9' },
+    { id: 'CC3.4', name: 'Risk mitigation', status: '1 High open', count: 1, trend: '▲', findings: '#6' },
+    { id: 'CC9.2', name: 'Vendor & third-party risk', status: '1 High open', count: 1, trend: '─', findings: '#6' },
+  ],
+  'ISO 27001': [
+    { id: 'A.5.15', name: 'Access control', status: '1 Critical open', count: 1, trend: '▲', findings: '#1' },
+    { id: 'A.5.17', name: 'Authentication information', status: 'Compliant', count: 0, trend: '─', findings: '' },
+    { id: 'A.5.19–A.5.22', name: 'Supplier relationships', status: '1 High open', count: 1, trend: '▲', findings: '#6' },
+    { id: 'A.8.9', name: 'Configuration management', status: '2 findings open', count: 2, trend: '─', findings: '#2 · #8' },
+    { id: 'A.8.22', name: 'Network segmentation', status: '1 Critical open', count: 1, trend: '─', findings: '#22' },
+    { id: 'A.8.24', name: 'Cryptography', status: '1 Critical open', count: 1, trend: '▼', findings: '#4' },
+    { id: 'A.8.31', name: 'Separation of dev+prod+test', status: '2 findings open', count: 2, trend: '─', findings: '#2 · #9' },
+  ],
+  'FedRAMP Mod': [
+    { id: 'AC-2', name: 'Account management', status: '1 Critical open', count: 1, trend: '▲', findings: '#1' },
+    { id: 'AC-3', name: 'Access enforcement', status: '1 Critical open', count: 1, trend: '─', findings: '#1' },
+    { id: 'CM-6', name: 'Configuration settings', status: '2 findings open', count: 2, trend: '▲', findings: '#2 · #8' },
+    { id: 'CM-7', name: 'Least functionality', status: '3 findings open', count: 3, trend: '─', findings: '#2 · #8 · #9' },
+    { id: 'SA-12', name: 'Supply chain', status: '1 High open', count: 1, trend: '▲', findings: '#6' },
+    { id: 'SC-7', name: 'Boundary protection', status: '1 Critical open', count: 1, trend: '─', findings: '#22' },
+    { id: 'SC-8', name: 'Transmission confidentiality', status: '1 Critical open', count: 1, trend: '▼', findings: '#4' },
+  ],
+};
 
 export const mdmProfiles = [
-  { name: 'claude-perm-ceiling', covers: '#2 · #8 · #10', deployed: '324 dev', success: '98.4%' },
-  { name: 'claude-sandbox-enforce', covers: '#3 · #11', deployed: '324 dev', success: '99.1%' },
-  { name: 'cursor-privacy-enforce', covers: '#15', deployed: '201 dev', success: '100%' },
-  { name: 'codex-approval-ceiling', covers: '#2 · #3', deployed: '89 dev', success: '96.6%' },
-  { name: 'codex-imds-deny', covers: '#22', deployed: '89 dev', success: '100%' },
-  { name: 'protected-paths-baseline', covers: '#10', deployed: '—', success: 'draft' },
-  { name: 'llm-gateway-allowlist', covers: '#4', deployed: '—', success: 'draft' },
+  { name: 'claude-perm-ceiling', covers: '#2 · #8 · #10', deployed: '324 dev', success: '98.4%', vendor: 'Jamf' },
+  { name: 'claude-sandbox-enforce', covers: '#3 · #11', deployed: '324 dev', success: '99.1%', vendor: 'Jamf' },
+  { name: 'claude-sso-only', covers: '#1', deployed: '487 dev', success: '97.9%', vendor: 'Jamf' },
+  { name: 'claude-managed-hooks-only', covers: '#9 · #21', deployed: '324 dev', success: '99.6%', vendor: 'Jamf' },
+  { name: 'cursor-mcp-allowlist', covers: '#6 · #7', deployed: '201 dev', success: '95.5%', vendor: 'Intune' },
+  { name: 'cursor-privacy-enforce', covers: '#15', deployed: '201 dev', success: '100%', vendor: 'Intune' },
+  { name: 'codex-approval-ceiling', covers: '#2 · #3', deployed: '89 dev', success: '96.6%', vendor: 'Kandji' },
+  { name: 'codex-imds-deny', covers: '#22', deployed: '89 dev', success: '100%', vendor: 'Kandji' },
+  { name: 'llm-gateway-allowlist', covers: '#4', deployed: '—', success: 'draft', vendor: 'Jamf' },
+  { name: 'protected-paths-baseline', covers: '#10 · #23', deployed: '—', success: 'draft', vendor: 'Jamf' },
+  { name: 'telemetry-no-prompts', covers: '#16', deployed: '—', success: 'draft', vendor: 'Jamf' },
+  { name: 'binary-attestation', covers: '#24', deployed: '—', success: 'draft', vendor: 'Intune' },
+  { name: 'config-drift-baseline', covers: '#25', deployed: '—', success: 'draft', vendor: 'Jamf' },
+];
+
+export const integrations = [
+  { category: 'SIEM', name: 'Splunk HEC (CIM schema)', status: 'connected', last: '4 min ago', throughput: '2,418 ev/hr' },
+  { category: 'SIEM', name: 'Microsoft Sentinel', status: 'connected', last: '3 min ago', throughput: '1,840 ev/hr' },
+  { category: 'SIEM', name: 'Google Chronicle (UDM)', status: 'not connected', last: '—', throughput: '—' },
+  { category: 'SOAR', name: 'Palo Alto XSOAR', status: 'connected', last: '12 min ago', throughput: '47 ev/d' },
+  { category: 'SOAR', name: 'Tines', status: 'not connected', last: '—', throughput: '—' },
+  { category: 'Ticketing', name: 'Jira Cloud', status: 'connected', last: '1 min ago', throughput: '23 tix today' },
+  { category: 'Ticketing', name: 'ServiceNow ITSM', status: 'not connected', last: '—', throughput: '—' },
+  { category: 'Ticketing', name: 'Linear', status: 'connected', last: '38 min ago', throughput: '4 tix today' },
+  { category: 'Identity', name: 'Okta SCIM', status: 'connected', last: 'continuous', throughput: '487 users synced' },
+  { category: 'Messaging', name: 'Slack', status: 'connected', last: '2 min ago', throughput: '18 msgs today' },
+  { category: 'On-call', name: 'PagerDuty', status: 'connected', last: '2h ago', throughput: 'last page 2h ago' },
+  { category: 'MDM', name: 'Jamf Pro', status: 'connected', last: '5 min ago', throughput: '324 devices managed' },
+  { category: 'MDM', name: 'Microsoft Intune', status: 'connected', last: '8 min ago', throughput: '201 devices managed' },
+  { category: 'MDM', name: 'Kandji', status: 'connected', last: '11 min ago', throughput: '89 devices managed' },
+  { category: 'MDM', name: 'Workspace ONE', status: 'not connected', last: '—', throughput: '—' },
+  { category: 'EDR', name: 'CrowdStrike Falcon', status: 'connected', last: '1 min ago', throughput: 'webhook live' },
+  { category: 'EDR', name: 'Microsoft Defender', status: 'not connected', last: '—', throughput: '—' },
 ];
