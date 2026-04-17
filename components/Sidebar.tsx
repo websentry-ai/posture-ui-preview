@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -74,6 +73,8 @@ const sections: Section[] = [
   },
 ];
 
+const BASE = process.env.NODE_ENV === 'production' ? '/posture-ui-preview' : '';
+
 export default function Sidebar() {
   const pathname = usePathname();
 
@@ -106,10 +107,11 @@ export default function Sidebar() {
                 const active =
                   item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
                 const Icon = item.icon;
+                const href = item.href === '/' ? `${BASE}/` : `${BASE}${item.href}/`;
                 return (
                   <li key={item.href}>
-                    <Link
-                      href={item.href}
+                    <a
+                      href={href}
                       className={cn(
                         'flex items-center gap-2 px-2 py-1.5 rounded-md text-[13px] transition-colors',
                         active
@@ -124,7 +126,7 @@ export default function Sidebar() {
                           soon
                         </span>
                       )}
-                    </Link>
+                    </a>
                   </li>
                 );
               })}

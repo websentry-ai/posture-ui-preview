@@ -45,13 +45,13 @@ function Tile({
   return (
     <Link
       href={href ?? '/issues'}
-      className="block p-4 hover:bg-unbound-bg-hover transition-colors"
+      className="block px-4 py-3 hover:bg-unbound-bg-hover transition-colors"
     >
-      <div className="text-[11px] uppercase tracking-wide text-unbound-text-muted">{label}</div>
-      <div className="flex items-baseline gap-2 mt-1">
-        <div className="text-[24px] font-semibold text-unbound-text-primary">{value}</div>
+      <div className="text-[10.5px] uppercase tracking-wide text-unbound-text-muted">{label}</div>
+      <div className="flex items-baseline gap-2 mt-0.5">
+        <div className="text-[20px] font-semibold text-unbound-text-primary leading-tight">{value}</div>
         {delta && (
-          <div className={cn('text-[12px] font-medium flex items-center gap-0.5', dirColor)}>
+          <div className={cn('text-[11.5px] font-medium flex items-center gap-0.5', dirColor)}>
             {Arrow && <Arrow className="w-3 h-3" />}
             {delta}
           </div>
@@ -285,12 +285,12 @@ function CoverageTile({
   href?: string;
 }) {
   return (
-    <Link href={href ?? '#'} className="block p-4 hover:bg-unbound-bg-hover transition">
-      <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-unbound-text-muted">
+    <Link href={href ?? '#'} className="block px-4 py-3 hover:bg-unbound-bg-hover transition">
+      <div className="flex items-center gap-1.5 text-[10.5px] uppercase tracking-wide text-unbound-text-muted">
         {icon}
         {label}
       </div>
-      <div className="text-[20px] font-semibold text-unbound-text-primary mt-1">{value}</div>
+      <div className="text-[18px] font-semibold text-unbound-text-primary mt-0.5 leading-tight">{value}</div>
     </Link>
   );
 }
