@@ -5,6 +5,7 @@ import { PageHeader, Card, CardHeader } from '@/components/Card';
 import { SevBadge } from '@/components/SevBadge';
 import { controls } from '@/lib/mock-data';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { FileDown, ChevronRight } from 'lucide-react';
 
 type Framework = keyof typeof controls;
@@ -13,6 +14,7 @@ const frameworks: Framework[] = ['NIST CSF 2.0', 'SOC 2', 'ISO 27001'];
 export default function ControlsPage() {
   const [fw, setFw] = useState<Framework>('NIST CSF 2.0');
   const list = controls[fw];
+  const router = useRouter();
 
   return (
     <>
@@ -67,9 +69,11 @@ export default function ControlsPage() {
                 : c.status.includes('High') || c.status.toLowerCase().includes('finding')
                 ? 'high'
                 : 'low';
+              const firstRule = c.findings?.match(/#(\d+)/)?.[1];
               return (
                 <tr
                   key={c.id}
+                  onClick={() => firstRule && router.push(`/issues?rule=${firstRule}`)}
                   className="border-b border-unbound-border last:border-0 hover:bg-unbound-bg-hover cursor-pointer"
                 >
                   <td className="px-5 py-3 mono text-[12.5px] text-unbound-text-primary font-medium">

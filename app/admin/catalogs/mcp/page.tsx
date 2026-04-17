@@ -103,7 +103,7 @@ export default function MCPCatalog() {
           right={
             <div className="text-[11px] text-unbound-text-tertiary">
               Unbound proposed 4 new entries  ·{' '}
-              <button className="text-unbound-purple font-semibold hover:underline">Review ↓</button>
+              <button onClick={() => showToast('4 MCPs seen across 38 Unbound customers · review + merge in inbox')} className="text-unbound-purple font-semibold hover:underline">Review ↓</button>
             </div>
           }
         />

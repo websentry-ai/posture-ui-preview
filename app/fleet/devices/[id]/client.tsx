@@ -15,6 +15,7 @@ import {
 import FreezeModal from '@/components/FreezeModal';
 import { Toast } from '@/components/Modal';
 import type { Finding } from '@/lib/mock-data';
+import { useStore } from '@/lib/store';
 
 type Device = (typeof import('@/lib/mock-data'))['devices'][number];
 
@@ -28,7 +29,8 @@ export default function DeviceDetailClient({
   const [tab, setTab] = useState<'issues' | 'inventory' | 'configuration' | 'timeline'>('issues');
   const [freezeOpen, setFreezeOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [frozen, setFrozen] = useState<string | null>(null);
+  const [frozenMap, storeActions] = useStore((s) => s.frozenDevices);
+  const frozen = frozenMap[device.id] ?? null;
 
   const showToast = (m: string) => {
     setToast(m);
@@ -53,8 +55,11 @@ export default function DeviceDetailClient({
               {device.id} · {device.os} · MDM: {device.mdm} · Scanner: {device.lastSync} ago
             </div>
             {frozen && (
-              <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11.5px] font-medium bg-sev-critical-bg text-sev-critical border border-sev-critical/30">
+              <div className="mt-2 inline-flex items-center gap-2 px-2 py-1 rounded-md text-[11.5px] font-medium bg-sev-critical-bg text-sev-critical border border-sev-critical/30">
                 <AlertTriangle className="w-3 h-3" /> Frozen ({frozen}) · unfreeze requires CISO approval
+                <button onClick={() => storeActions.clearFrozen(device.id)} className="ml-1 underline opacity-80 hover:opacity-100 font-normal">
+                  unfreeze
+                </button>
               </div>
             )}
           </div>
@@ -329,8 +334,13 @@ export default function DeviceDetailClient({
         open={freezeOpen}
         onClose={() => setFreezeOpen(false)}
         onConfirm={(i) => {
-          setFrozen(i.label);
-          showToast(`Frozen (${i.label}) · #INC-2183 opened · Slack #secops-pager notified · audit ledger entry written`);
+          storeActions.setFrozen(device.id, i.label);
+          storeActions.addAction({
+            kind: 'freeze',
+            label: `Frozen · ${device.user}`,
+            detail: `${i.label} · #INC-2183 · Slack #secops-pager notified`,
+          });
+          showToast(`Frozen (${i.label}) · #INC-2183 opened · audit ledger entry written`);
         }}
         deviceId={device.id}
         user={device.user}

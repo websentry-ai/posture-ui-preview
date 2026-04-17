@@ -7,7 +7,9 @@ import { Toast } from '@/components/Modal';
 
 export default function ReportsPage() {
   const [toast, setToast] = useState<string | null>(null);
+  const [period, setPeriod] = useState('Q1 2026');
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(null), 3000); };
+  const slug = period.toLowerCase().replace(' ', '-');
   return (
     <>
       <PageHeader title="Reports" meta="Auditor-ready signed evidence" />
@@ -21,11 +23,12 @@ export default function ReportsPage() {
           <Format icon={Package} label="Underlying CSV" desc="Every number has provenance" />
         </div>
         <div className="px-5 pb-5 flex items-center gap-2">
-          <select className="px-3 py-1.5 text-[12px] border border-unbound-border rounded-md bg-white">
-            <option>Q1 2026 (Jan 1 → Mar 31)</option>
-            <option>Q4 2025</option>
+          <select value={period} onChange={(e) => setPeriod(e.target.value)} className="px-3 py-1.5 text-[12px] border border-unbound-border rounded-md bg-white">
+            <option value="Q1 2026">Q1 2026 (Jan 1 → Mar 31)</option>
+            <option value="Q4 2025">Q4 2025</option>
+            <option value="Q3 2025">Q3 2025</option>
           </select>
-          <button onClick={() => showToast('Generating posture-Q1-2026.pdf + .pptx + .csv · signed by sha256:7d…a81c · 3s')} className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
+          <button onClick={() => showToast(`Generating posture-${slug}.pdf + .pptx + .csv · signed by sha256:7d…a81c · 3s`)} className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
             <FileDown className="w-3.5 h-3.5" /> Generate report
           </button>
         </div>
@@ -47,7 +50,7 @@ export default function ReportsPage() {
           </span>
         </div>
         <div className="px-5 pb-5">
-          <button onClick={() => showToast('evidence-pack-SOC2-2026Q1-fleet.zip · 7 files · signed manifest · 3s')} className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
+          <button onClick={() => showToast(`evidence-pack-SOC2-${slug.toUpperCase()}-fleet.zip · 7 files · signed manifest · 3s`)} className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
             <FileDown className="w-3.5 h-3.5" /> Generate packet
           </button>
         </div>

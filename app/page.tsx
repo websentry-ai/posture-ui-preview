@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { fleet, severityCounts, findings } from '@/lib/mock-data';
 import BreakChainModal from '@/components/BreakChainModal';
 import { Toast } from '@/components/Modal';
+import { useStore, type PendingAction } from '@/lib/store';
 
 function Tile({
   label,
@@ -65,6 +66,7 @@ export default function Overview() {
   const [chainOpen, setChainOpen] = useState<null | { chain: string; devices: string[] }>(null);
   const [timeRange, setTimeRange] = useState<'day' | 'week' | 'month'>('week');
   const [toast, setToast] = useState<string | null>(null);
+  const [pending, actions] = useStore((s) => s.pendingActions);
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2800); };
 
   return (
@@ -116,6 +118,29 @@ export default function Overview() {
           <CoverageTile icon={<AlertTriangle className="w-3.5 h-3.5 text-sev-high" />} label="BYOD opt-in" value={15} href="/fleet/byod" />
         </div>
       </Card>
+
+      {/* Pending actions — visible side effects from Break chain / Freeze / approvals */}
+      {pending.length > 0 && (
+        <Card className="mb-5 border-unbound-purple/30">
+          <CardHeader title="Pending actions" meta={`${pending.length} live · refreshes every 60s`} right={<Zap className="w-4 h-4 text-unbound-purple" />} />
+          <div className="divide-y divide-unbound-border">
+            {pending.map((a) => (
+              <div key={a.id} className="px-5 py-3 flex items-center justify-between text-[13px]">
+                <div>
+                  <div className="font-medium text-unbound-text-primary">{a.label}</div>
+                  <div className="text-[12px] text-unbound-text-tertiary mt-0.5">{a.detail}</div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {a.eta && <span className="text-[11px] text-unbound-text-muted">ETA {a.eta}</span>}
+                  <button onClick={() => actions.removeAction(a.id)} className="text-[11px] text-unbound-text-tertiary hover:text-unbound-text-primary">
+                    Clear
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* SLA + WAIVERS */}
       <div className="grid grid-cols-2 gap-5 mb-5">
@@ -231,7 +256,15 @@ export default function Overview() {
       <BreakChainModal
         open={!!chainOpen}
         onClose={() => setChainOpen(null)}
-        onConfirm={(i) => showToast(`${i.profileCount} profiles queued · Jamf deploying to ${i.deviceCount} devices · rollout canary 10% first`)}
+        onConfirm={(i) => {
+          actions.addAction({
+            kind: 'policy-push',
+            label: `${i.profileCount} profiles queued · Jamf`,
+            detail: `Canary 10% → ${i.deviceCount} devices · rollback on regression`,
+            eta: '14 min',
+          });
+          showToast(`${i.profileCount} profiles queued · visible in Pending actions`);
+        }}
         chain={chainOpen?.chain ?? ''}
         devices={chainOpen?.devices ?? []}
       />

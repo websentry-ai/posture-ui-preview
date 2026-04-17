@@ -1,13 +1,15 @@
+'use client';
+
+import { useState } from 'react';
 import { PageHeader, Card, CardHeader } from '@/components/Card';
-import { FileText, ShieldCheck, Lock, Users, Cpu, Download } from 'lucide-react';
+import { FileText, ShieldCheck, Lock, Cpu, Download } from 'lucide-react';
+import { Toast } from '@/components/Modal';
 
 const artifacts = [
-  { name: 'SOC 2 Type II report', date: 'period 2025-09 → 2026-03', auditor: 'Coalfire', file: 'soc2-type-ii-2026h1.pdf', kind: 'pdf' as const },
-  { name: 'Pen-test letter', date: '2026-02-14', auditor: 'Bishop Fox', file: 'pentest-2026q1.pdf', kind: 'pdf' as const },
-  { name: 'DPA template', date: 'v3.2 · 2026-03-20', auditor: 'Legal', file: 'dpa-template.pdf', kind: 'pdf' as const },
-  { name: 'Sub-processor list', date: 'updated 2026-04-10', auditor: 'Internal', file: 'subprocessors.md', kind: 'md' as const },
-  { name: 'CAIQ Lite (v5)', date: 'submitted 2026-03-31', auditor: 'Internal', file: 'caiq-lite-v5.xlsx', kind: 'xlsx' as const },
-  { name: 'FedRAMP moderate roadmap', date: 'In Process target 2026-Q4', auditor: 'Internal', file: 'fedramp-plan.pdf', kind: 'pdf' as const },
+  { name: 'SOC 2 Type II report', date: 'period 2025-09 → 2026-03', auditor: 'Coalfire', file: 'soc2-type-ii-2026h1.pdf', sha: 'sha256:a2…91c' },
+  { name: 'Pen-test letter', date: '2026-02-14', auditor: 'Bishop Fox', file: 'pentest-2026q1.pdf', sha: 'sha256:5f…b2d' },
+  { name: 'CAIQ Lite (v5)', date: 'submitted 2026-03-31', auditor: 'Internal', file: 'caiq-lite-v5.xlsx', sha: 'sha256:8e…43a' },
+  { name: 'FedRAMP moderate roadmap', date: 'In Process target 2026-Q4', auditor: 'Internal · sponsor: DoE', file: 'fedramp-plan.pdf', sha: 'sha256:3b…77e' },
 ];
 
 const architecture = [
@@ -15,17 +17,29 @@ const architecture = [
   { label: 'Data residency', value: 'us-east-1 (primary) · eu-west-1 (EU tenants) · ap-south-1 (India tenants)' },
   { label: 'Encryption', value: 'At rest: AES-256 via tenant KMS · In transit: TLS 1.3 only · FIPS 140-3 validated' },
   { label: 'Classifier', value: 'On-device · no prompt/evidence egress · model hash published per release' },
-  { label: 'Retention', value: 'Default 13 months · configurable 6–36 months · WORM for signed evidence' },
+  { label: 'Retention', value: '13 months default · configurable 6–36 months · WORM for signed evidence' },
   { label: 'Access control', value: 'SSO via Okta · SCIM provisioning · 4 RBAC roles · break-glass logged to audit' },
 ];
 
 const modelCards = [
-  { name: 'classifier-ensemble-v3', cutoff: '2026-03-01', fpClass: { hook: 0.078, mcp: 0.042, other: 0.023 }, adversarial: 'passed (see MCard)' },
-  { name: 'unbound-supplychain-2026.04', cutoff: '2026-04-01', fpClass: { mcpPublisher: 0.091 }, adversarial: 'in progress' },
-  { name: 'unbound-hook-2026.04', cutoff: '2026-04-01', fpClass: { rce: 0.097 }, adversarial: 'passed' },
+  { name: 'classifier-ensemble-v3', cutoff: '2026-03-01', fpClass: { hook: 8, mcp: 4, other: 2 }, adversarial: 'passed (n=3,420)' },
+  { name: 'unbound-supplychain-2026.04', cutoff: '2026-04-01', fpClass: { mcpPublisher: 9 }, adversarial: 'in progress' },
+  { name: 'unbound-hook-2026.04', cutoff: '2026-04-01', fpClass: { rce: 10 }, adversarial: 'passed (n=1,890)' },
+];
+
+const subprocessors = [
+  { name: 'Amazon Web Services', purpose: 'Hosting · KMS · S3', regions: 'us-east-1 · eu-west-1 · ap-south-1', dpa: 'AWS GDPR DPA v3.2' },
+  { name: 'Anthropic', purpose: 'Opt-in enrichment · not required for core posture', regions: 'us-east-1', dpa: 'ZDR addendum' },
+  { name: 'Stripe', purpose: 'Billing', regions: 'us · eu', dpa: 'Stripe DPA' },
+  { name: 'Vanta', purpose: 'Compliance evidence aggregator', regions: 'us-east-1', dpa: 'Vanta DPA v2' },
+  { name: 'Cloudflare', purpose: 'CDN · WAF · DDoS protection', regions: 'global', dpa: 'Cloudflare DPA' },
+  { name: 'Sentry', purpose: 'Error aggregation · no prompt content', regions: 'us-east-1', dpa: 'Sentry DPA' },
 ];
 
 export default function TrustPage() {
+  const [toast, setToast] = useState<string | null>(null);
+  const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2800); };
+
   return (
     <>
       <PageHeader
@@ -35,13 +49,13 @@ export default function TrustPage() {
 
       {/* Attestations */}
       <Card className="mb-5">
-        <CardHeader title="Attestations & contracts" meta="SOC 2 · Pen test · DPA · CAIQ · FedRAMP" />
+        <CardHeader title="Attestations & contracts" meta="SOC 2 · Pen test · CAIQ · FedRAMP" />
         <table className="w-full text-[13px]">
           <thead>
             <tr className="text-left text-[11px] uppercase tracking-wide text-unbound-text-muted border-b border-unbound-border bg-unbound-bg-hover">
               <th className="px-5 py-2.5 font-medium">Artifact</th>
               <th className="px-3 py-2.5 font-medium">Date</th>
-              <th className="px-3 py-2.5 font-medium">Auditor / source</th>
+              <th className="px-3 py-2.5 font-medium">Source</th>
               <th className="px-3 py-2.5 font-medium">File</th>
               <th className="px-3 py-2.5"></th>
             </tr>
@@ -55,12 +69,64 @@ export default function TrustPage() {
                 </td>
                 <td className="px-3 py-3 text-unbound-text-tertiary">{a.date}</td>
                 <td className="px-3 py-3 text-unbound-text-tertiary">{a.auditor}</td>
-                <td className="px-3 py-3 mono text-[12px] text-unbound-text-tertiary">{a.file}</td>
+                <td className="px-3 py-3 mono text-[11.5px]">
+                  <div>{a.file}</div>
+                  <div className="text-unbound-text-muted">{a.sha}</div>
+                </td>
                 <td className="px-3 py-3 text-right">
-                  <button className="inline-flex items-center gap-1 px-2 py-1 text-[11px] rounded border border-unbound-border hover:bg-unbound-bg-hover">
+                  <button
+                    onClick={() => showToast(`Signed ${a.file} delivered · ${a.sha} · emailed to your procurement contact`)}
+                    className="inline-flex items-center gap-1 px-2 py-1 text-[11px] rounded border border-unbound-border hover:bg-unbound-bg-hover"
+                  >
                     <Download className="w-3 h-3" /> Download
                   </button>
                 </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
+
+      {/* DPA inline */}
+      <Card className="mb-5">
+        <CardHeader title="Data Processing Addendum (DPA)" meta="v3.2 · updated 2026-03-20 · inline for copy-paste" />
+        <div className="p-5 text-[12.5px] text-unbound-text-secondary leading-relaxed space-y-2 max-h-[220px] overflow-y-auto drawer-scroll">
+          <p><strong>1. Processing scope.</strong> Unbound Security acts as Processor under GDPR Art. 28 for Customer Data including: device configuration state, finding metadata, scan manifests, waiver records, and user identifiers synced via SCIM. Prompt bodies are <em>not</em> processed by Unbound; classification is on-device.</p>
+          <p><strong>2. Sub-processors.</strong> See the list below. Customer is notified 30 days before any sub-processor addition. Objection right per Art. 28(2).</p>
+          <p><strong>3. International transfers.</strong> SCCs Module 2 where applicable. EU tenants may opt into eu-west-1 residency; data egress from region is prohibited by policy + technical controls (VPC egress rules).</p>
+          <p><strong>4. Security measures.</strong> ISO 27001:2022 Annex A controls applied. Encryption at rest (AES-256, per-tenant KMS) and in transit (TLS 1.3, FIPS 140-3 validated). SOC 2 Type II report available above.</p>
+          <p><strong>5. Retention & deletion.</strong> 13-month default; configurable 6–36 months. Hard-delete within 30 days of contract termination; certificate of destruction provided on request.</p>
+          <p><strong>6. Breach notification.</strong> Customer notified within 72 hours of confirmed personal-data breach, per GDPR Art. 33.</p>
+        </div>
+        <div className="px-5 pb-4 flex gap-2">
+          <button onClick={() => { navigator.clipboard?.writeText('Unbound DPA v3.2 — see /admin/trust for full text'); showToast('DPA text copied to clipboard'); }} className="text-[11px] px-2 py-1 rounded border border-unbound-border hover:bg-unbound-bg-hover">
+            Copy inline text
+          </button>
+          <button onClick={() => showToast('Signed DPA emailed to your procurement contact')} className="text-[11px] px-2 py-1 rounded border border-unbound-border hover:bg-unbound-bg-hover">
+            Request signed copy
+          </button>
+        </div>
+      </Card>
+
+      {/* Sub-processors inline */}
+      <Card className="mb-5">
+        <CardHeader title="Sub-processors" meta="inline · updated 2026-04-10 · 30-day notice on changes" />
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr className="text-left text-[11px] uppercase tracking-wide text-unbound-text-muted border-b border-unbound-border bg-unbound-bg-hover">
+              <th className="px-5 py-2.5 font-medium">Processor</th>
+              <th className="px-3 py-2.5 font-medium">Purpose</th>
+              <th className="px-3 py-2.5 font-medium">Regions</th>
+              <th className="px-3 py-2.5 font-medium">DPA</th>
+            </tr>
+          </thead>
+          <tbody>
+            {subprocessors.map((s) => (
+              <tr key={s.name} className="border-b border-unbound-border last:border-0">
+                <td className="px-5 py-2.5 font-medium">{s.name}</td>
+                <td className="px-3 py-2.5 text-unbound-text-secondary">{s.purpose}</td>
+                <td className="px-3 py-2.5 mono text-[11.5px] text-unbound-text-tertiary">{s.regions}</td>
+                <td className="px-3 py-2.5 text-unbound-text-tertiary">{s.dpa}</td>
               </tr>
             ))}
           </tbody>
@@ -88,7 +154,7 @@ export default function TrustPage() {
             <tr className="text-left text-[11px] uppercase tracking-wide text-unbound-text-muted border-b border-unbound-border bg-unbound-bg-hover">
               <th className="px-5 py-2.5 font-medium">Model</th>
               <th className="px-3 py-2.5 font-medium">Training cutoff</th>
-              <th className="px-3 py-2.5 font-medium">FP rate (class)</th>
+              <th className="px-3 py-2.5 font-medium">FP rate (%)</th>
               <th className="px-3 py-2.5 font-medium">Adversarial eval</th>
               <th className="px-3 py-2.5"></th>
             </tr>
@@ -100,12 +166,15 @@ export default function TrustPage() {
                 <td className="px-3 py-3 text-unbound-text-tertiary">{m.cutoff}</td>
                 <td className="px-3 py-3 mono text-[11.5px] text-unbound-text-tertiary">
                   {Object.entries(m.fpClass).map(([k, v]) => (
-                    <div key={k}>{k}: {(v * 100).toFixed(1)}%</div>
+                    <div key={k}>{k}: ~{v}%</div>
                   ))}
                 </td>
                 <td className="px-3 py-3 text-unbound-text-tertiary">{m.adversarial}</td>
                 <td className="px-3 py-3 text-right">
-                  <button className="inline-flex items-center gap-1 px-2 py-1 text-[11px] rounded border border-unbound-border hover:bg-unbound-bg-hover">
+                  <button
+                    onClick={() => showToast(`Model card for ${m.name} delivered · methodology link included`)}
+                    className="inline-flex items-center gap-1 px-2 py-1 text-[11px] rounded border border-unbound-border hover:bg-unbound-bg-hover"
+                  >
                     <Download className="w-3 h-3" /> Model card
                   </button>
                 </td>
@@ -117,22 +186,23 @@ export default function TrustPage() {
 
       {/* Change log */}
       <Card>
-        <CardHeader title="Trust changelog" meta="append-only · signed" right={<ShieldCheck className="w-4 h-4 text-unbound-purple" />} />
+        <CardHeader title="Trust changelog" meta="append-only · hash-chained" right={<ShieldCheck className="w-4 h-4 text-unbound-purple" />} />
         <ol className="p-5 space-y-2 text-[12.5px]">
           {[
-            { t: '2026-04-14', e: 'SOC 2 Type II period extended → 2026-09' },
-            { t: '2026-04-10', e: 'Sub-processor added: AWS eu-west-1 (EU residency launch)' },
-            { t: '2026-03-31', e: 'CAIQ Lite v5 submitted · Azure co-sell listing' },
-            { t: '2026-02-14', e: 'Bishop Fox pen-test letter issued · 0 criticals' },
-            { t: '2026-02-01', e: 'FedRAMP In-Process roadmap accepted by sponsor agency' },
+            { t: '2026-04-14', e: 'SOC 2 Type II period extended → 2026-09', sha: 'sha256:1a…e4b' },
+            { t: '2026-04-10', e: 'Sub-processor added: AWS eu-west-1 (EU residency launch)', sha: 'sha256:7c…29f' },
+            { t: '2026-02-14', e: 'Bishop Fox pen-test letter issued · 0 criticals', sha: 'sha256:5f…b2d' },
           ].map((x, i) => (
-            <li key={i} className="flex gap-3">
+            <li key={i} className="flex gap-3 items-center">
               <span className="mono text-[11px] text-unbound-text-muted w-24 shrink-0">{x.t}</span>
-              <span className="text-unbound-text-secondary">{x.e}</span>
+              <span className="text-unbound-text-secondary flex-1">{x.e}</span>
+              <span className="mono text-[10px] text-unbound-text-muted">{x.sha}</span>
             </li>
           ))}
         </ol>
       </Card>
+
+      {toast && <Toast message={toast} kind="success" />}
     </>
   );
 }
