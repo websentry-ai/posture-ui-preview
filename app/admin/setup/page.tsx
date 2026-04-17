@@ -5,8 +5,8 @@ export default function Page() {
   return (
     <>
       <PageHeader
-        title="Setup & health"
-        subtitle="Day-1 onboarding checklist + continuous health — MDM connectors, agent rollout, data residency, works-council language"
+        title="Setup"
+        meta="4 of 6 steps complete"
         right={
           <button className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
             <Download className="w-3.5 h-3.5" /> Download deployment guide
@@ -16,7 +16,7 @@ export default function Page() {
 
       {/* Progress */}
       <Card className="mb-5">
-        <CardHeader title="Onboarding progress" subtitle="4 of 6 steps complete — ready for pilot" />
+        <CardHeader title="Onboarding progress" />
         <div className="p-5 space-y-3 text-[13px]">
           <Step done title="MDM connector" detail="Jamf Pro (prod) · Intune (prod) · Kandji (prod)" />
           <Step done title="Identity source" detail="Okta SCIM connected · 487 users syncing · BU/geo/manager attributes live" />
@@ -29,7 +29,7 @@ export default function Page() {
 
       {/* Data handling */}
       <Card className="mb-5">
-        <CardHeader title="Data handling" subtitle="What we collect · where it lives · who sees it" />
+        <CardHeader title="Data handling" />
         <div className="p-5 grid grid-cols-2 gap-5 text-[13px]">
           <Row icon={<Globe className="w-4 h-4 text-unbound-purple" />} label="Region" value="us-east-1 (primary) · eu-west-1 (EU tenants)" />
           <Row icon={<Key className="w-4 h-4 text-unbound-purple" />} label="Encryption" value="BYOK (AWS KMS) · FIPS 140-3 validated" />
@@ -40,35 +40,6 @@ export default function Page() {
         </div>
       </Card>
 
-      {/* Scanner health */}
-      <Card>
-        <CardHeader title="Scanner health (continuous)" subtitle="Per-agent coverage + scanner freshness — same numbers the CISO sees on Overview" />
-        <div className="p-5 space-y-2 text-[13px]">
-          {[
-            { agent: 'Claude Code', managed: 312, scanning: 308, stale: 4, dark: 0, status: 'healthy' as const },
-            { agent: 'Cursor', managed: 201, scanning: 140, stale: 61, dark: 0, status: 'degraded' as const },
-            { agent: 'Codex', managed: 89, scanning: 89, stale: 0, dark: 0, status: 'healthy' as const },
-          ].map((s) => (
-            <div key={s.agent} className="flex items-center justify-between p-3 rounded-md border border-unbound-border">
-              <div>
-                <div className="font-semibold text-[13px]">{s.agent}</div>
-                <div className="text-[11.5px] text-unbound-text-tertiary mt-0.5">
-                  {s.scanning} scanning · {s.stale} stale · {s.dark} dark · {s.managed} managed
-                </div>
-              </div>
-              {s.status === 'healthy' ? (
-                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-sev-low-bg text-sev-low border border-sev-low/30">
-                  healthy
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-sev-high-bg text-sev-high border border-sev-high/30">
-                  <AlertCircle className="w-3 h-3" /> 61 stale
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-      </Card>
     </>
   );
 }

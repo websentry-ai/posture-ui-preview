@@ -15,7 +15,7 @@ export default function Page() {
     <>
       <PageHeader
         title="Suppressions"
-        subtitle={`${sups.length} active · 3 expiring ≤7d · 6 expiring ≤30d · anomaly detection enabled`}
+        meta={`${sups.length} active · 3 expiring ≤7d`}
         right={
           <button className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md border border-unbound-border bg-white hover:bg-unbound-bg-hover">
             <FileDown className="w-3.5 h-3.5" /> Export audit CSV
@@ -47,7 +47,7 @@ export default function Page() {
       </Card>
 
       <Card>
-        <CardHeader title="Active suppressions" subtitle="Three scopes: per-instance · device-scoped · finding-type mute" />
+        <CardHeader title="Active suppressions" />
         <table className="w-full text-[13px]">
           <thead>
             <tr className="text-left text-[11px] uppercase tracking-wide text-unbound-text-muted border-b border-unbound-border bg-unbound-bg-hover">

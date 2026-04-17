@@ -39,18 +39,15 @@ const sections: Section[] = [
     title: 'Fleet',
     items: [
       { href: '/fleet/devices', label: 'Devices', icon: Laptop },
-      { href: '/fleet/users', label: 'Users', icon: Users },
+      { href: '/fleet/byod', label: 'BYOD posture', icon: Users },
+      { href: '/fleet/heatmap', label: 'BU heatmap', icon: Map },
       { href: '/fleet/tools', label: 'AI Tools', icon: Wrench },
-      { href: '/fleet/heatmap', label: 'BU / Geo Heatmap', icon: Map },
     ],
   },
   {
     title: 'Inventory',
     items: [
-      { href: '/inventory/mcp', label: 'MCP Servers', icon: Package },
-      { href: '/inventory/extensions', label: 'Extensions', icon: Package },
-      { href: '/inventory/hooks', label: 'Hooks', icon: Package },
-      { href: '/inventory/agents', label: 'Agents & Binaries', icon: Server },
+      { href: '/inventory/mcp', label: 'MCP · Hooks · Extensions', icon: Package },
     ],
   },
   {

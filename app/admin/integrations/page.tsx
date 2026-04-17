@@ -13,7 +13,7 @@ export default function Page() {
     <>
       <PageHeader
         title="Integrations"
-        subtitle="SIEM · SOAR · ticketing · identity · MDM · EDR · messaging · on-call — healthchecks + event throughput visible per integration"
+        meta="14 connected · 3 not set"
         right={
           <button className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
             <Plug className="w-3.5 h-3.5" /> Add integration

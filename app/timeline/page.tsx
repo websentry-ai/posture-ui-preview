@@ -21,7 +21,7 @@ export default function Page() {
     <>
       <PageHeader
         title="Timeline"
-        subtitle="Tamper-evident audit log · signed hash chain · exportable for FedRAMP ConMon + SOC 2 Type II"
+        meta="Tamper-evident · signed hash chain"
         right={
           <div className="flex items-center gap-2">
             <select className="px-3 py-1.5 text-[12px] border border-unbound-border rounded-md bg-white">
@@ -43,7 +43,7 @@ export default function Page() {
       />
 
       <Card>
-        <CardHeader title="Events" subtitle={`${events.length} entries · chain anchor verified`} />
+        <CardHeader title="Events" meta={`${events.length} · chain verified`} />
         <div className="p-5">
           <div className="relative">
             <div className="absolute left-[7px] top-2 bottom-2 w-px bg-unbound-border" />
@@ -69,9 +69,6 @@ export default function Page() {
         </div>
       </Card>
 
-      <div className="mt-4 text-[11px] text-unbound-text-tertiary text-center">
-        Every event is SHA-256 chained · hourly Sigstore/Rekor anchor · WORM-stored in customer region (us-east-1)
-      </div>
     </>
   );
 }

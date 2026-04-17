@@ -11,9 +11,8 @@ import {
   Download,
   Clock,
   Sparkles,
-  FileText,
   ShieldCheck,
-  ShieldAlert,
+  Info,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import WaiveModal from './WaiveModal';
@@ -43,10 +42,18 @@ export default function IssueDrawer({
     setTimeout(() => setToast(null), 2400);
   };
 
+  const confidenceChip = finding.classification
+    ? finding.classification.confidence >= 0.95
+      ? 'high confidence'
+      : finding.classification.confidence >= 0.8
+      ? 'medium confidence'
+      : 'low confidence'
+    : null;
+
   return (
     <div className="fixed inset-0 z-40 flex">
       <div className="flex-1 bg-black/25" onClick={onClose} />
-      <div className="w-[640px] bg-white shadow-2xl flex flex-col border-l border-unbound-border">
+      <div className="w-[620px] bg-white shadow-2xl flex flex-col border-l border-unbound-border">
         {/* header */}
         <div className="px-5 py-4 border-b border-unbound-border">
           <div className="flex items-center justify-between">
@@ -58,19 +65,19 @@ export default function IssueDrawer({
               <span>{finding.firstSeen}</span>
             </div>
             <div className="flex items-center gap-1">
-              <button onClick={onPrev} className="p-1.5 hover:bg-unbound-bg-hover rounded" title="Previous (k)">
+              <button onClick={onPrev} className="p-1.5 hover:bg-unbound-bg-hover rounded">
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <button onClick={onNext} className="p-1.5 hover:bg-unbound-bg-hover rounded" title="Next (j)">
+              <button onClick={onNext} className="p-1.5 hover:bg-unbound-bg-hover rounded">
                 <ChevronRight className="w-4 h-4" />
               </button>
-              <button onClick={onClose} className="p-1.5 hover:bg-unbound-bg-hover rounded" title="Close (esc)">
+              <button onClick={onClose} className="p-1.5 hover:bg-unbound-bg-hover rounded">
                 <X className="w-4 h-4" />
               </button>
             </div>
           </div>
           <div className="mt-2 flex items-center gap-3">
-            <SevBadge severity={finding.severity} />
+            <SeverityPill finding={finding} />
             <h2 className="text-[16px] font-semibold text-unbound-text-primary">{finding.title}</h2>
           </div>
           <div className="mt-1 text-[12px] text-unbound-text-tertiary">
@@ -78,11 +85,11 @@ export default function IssueDrawer({
           </div>
         </div>
 
-        {/* status strip + actions */}
-        <div className="px-5 py-3 border-b border-unbound-border flex items-center justify-between bg-unbound-bg-hover flex-wrap gap-2">
-          <div className="flex items-center gap-3 text-[12px]">
+        {/* status strip */}
+        <div className="px-5 py-2 border-b border-unbound-border bg-unbound-bg-hover flex items-center justify-between text-[12px]">
+          <div className="flex items-center gap-3">
             <div className="flex items-center gap-1">
-              Status:{' '}
+              Status
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as any)}
@@ -94,61 +101,33 @@ export default function IssueDrawer({
                 <option value="remediated">Remediated</option>
               </select>
             </div>
-            <div className="text-unbound-text-muted">·</div>
-            <div>
-              Assignee: <span className="font-semibold">SOC-L1-queue</span>
-            </div>
-            <div className="text-unbound-text-muted">·</div>
-            <div className={cn(finding.slaBreach ? 'text-sev-critical font-semibold' : 'text-unbound-text-secondary')}>
-              SLA: {finding.slaLabel}
-            </div>
+            <span className="text-unbound-text-muted">·</span>
+            <span>SOC-L1-queue</span>
+            <span className="text-unbound-text-muted">·</span>
+            <span className={cn(finding.slaBreach ? 'text-sev-critical font-semibold' : '')}>SLA {finding.slaLabel}</span>
           </div>
         </div>
         <div className="px-5 py-2 border-b border-unbound-border flex flex-wrap gap-1.5">
-          <button
-            onClick={() => setWaiveOpen(true)}
-            className="px-2.5 py-1 text-[12px] rounded-md border border-unbound-border bg-white hover:bg-unbound-bg-hover"
-          >
+          <button onClick={() => setWaiveOpen(true)} className="px-2.5 py-1 text-[12px] rounded-md border border-unbound-border bg-white hover:bg-unbound-bg-hover">
             Waive
           </button>
-          <button
-            onClick={() => {
-              setStatus('remediated');
-              showToast('Marked as remediated — next scan will verify. Will reopen if still present.');
-            }}
-            className="px-2.5 py-1 text-[12px] rounded-md border border-unbound-border bg-white hover:bg-unbound-bg-hover"
-          >
+          <button onClick={() => { setStatus('remediated'); showToast('Marked remediated — next scan will verify'); }} className="px-2.5 py-1 text-[12px] rounded-md border border-unbound-border bg-white hover:bg-unbound-bg-hover">
             Mark remediated
           </button>
-          <button
-            onClick={() => showToast('Flagged as Not Risky — de-prioritized across org. Reopenable.')}
-            className="px-2.5 py-1 text-[12px] rounded-md border border-unbound-border bg-white hover:bg-unbound-bg-hover"
-          >
+          <button onClick={() => showToast('Flagged Not Risky — de-prioritized')} className="px-2.5 py-1 text-[12px] rounded-md border border-unbound-border bg-white hover:bg-unbound-bg-hover">
             Not risky
           </button>
-          <button
-            onClick={() => setForwardOpen(true)}
-            className="px-2.5 py-1 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover"
-          >
+          <button onClick={() => setForwardOpen(true)} className="px-2.5 py-1 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
             Forward fix
           </button>
-          <button
-            onClick={() => showToast(`Jira ticket created — SEC-${Math.floor(Math.random() * 900) + 100}`)}
-            className="px-2.5 py-1 text-[12px] rounded-md border border-unbound-border bg-white hover:bg-unbound-bg-hover"
-          >
-            Create Jira
+          <button onClick={() => showToast(`SOAR case opened · SEC-${Math.floor(Math.random() * 900) + 100}`)} className="px-2.5 py-1 text-[12px] rounded-md border border-unbound-border bg-white hover:bg-unbound-bg-hover">
+            Open ticket
           </button>
         </div>
 
         {/* body */}
         <div className="flex-1 overflow-y-auto drawer-scroll">
-          <Section title="What">
-            <p className="text-[13px] text-unbound-text-secondary leading-relaxed">
-              {finding.title}. {finding.attack[0]}.
-            </p>
-          </Section>
-
-          <Section title="Evidence" meta="Last verified 38 min ago">
+          <Section title="Evidence" meta="verified 38 min ago">
             {finding.evidence.map((ev, i) => (
               <div key={i} className="mb-3 last:mb-0">
                 <div className="text-[11.5px] font-medium text-unbound-text-tertiary mb-1 mono">
@@ -168,63 +147,35 @@ export default function IssueDrawer({
                 </div>
               </div>
             ))}
-            <div className="mt-3 text-[11px] text-unbound-text-muted">
-              Secrets visible in evidence are redacted client-side in the hosted tenant. Full unredacted evidence is stored in the customer region ({'us-east-1'}) and access-logged.
-            </div>
           </Section>
 
-          {finding.classification && (
-            <Section title="AI classification" icon={<Sparkles className="w-3.5 h-3.5 text-unbound-purple" />}>
-              <div className="rounded-md border border-unbound-border p-3 bg-white">
-                <div className="flex items-center justify-between">
-                  <div className="text-[13px] font-semibold text-unbound-text-primary">
-                    {finding.classification.class}
-                  </div>
-                  <div className="flex items-center gap-1 text-[11px] text-unbound-text-tertiary">
-                    Confidence:
-                    <span className="font-semibold text-unbound-text-primary">
-                      {Math.round(finding.classification.confidence * 100)}%
-                    </span>
-                  </div>
-                </div>
-                <div className="text-[12px] text-unbound-text-secondary mt-1 leading-relaxed">
-                  {finding.classification.reasoning}
-                </div>
-                <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] mono bg-unbound-bg border-t border-unbound-border pt-2 -mx-3 -mb-3 px-3 pb-2 rounded-b-md">
-                  <div>
-                    <span className="text-unbound-text-muted">model:</span> {finding.classification.model}
-                  </div>
-                  <div>
-                    <span className="text-unbound-text-muted">version:</span> {finding.classification.version}
-                  </div>
-                  <div>
-                    <span className="text-unbound-text-muted">classified:</span> {finding.classification.timestamp}
-                  </div>
-                  <div>
-                    <span className="text-unbound-text-muted">reviewed:</span> {finding.classification.reviewedBy}
-                  </div>
-                </div>
-                <div className="flex gap-1.5 mt-3">
-                  <button
-                    onClick={() => showToast('Marked as human-reviewed — confidence locked.')}
-                    className="text-[11px] px-2 py-1 rounded bg-unbound-purple text-white hover:bg-unbound-purple-hover"
-                  >
-                    Confirm classification
-                  </button>
-                  <button
-                    onClick={() => showToast('Override recorded — classifier will retrain with this signal.')}
-                    className="text-[11px] px-2 py-1 rounded border border-unbound-border hover:bg-unbound-bg-hover"
-                  >
-                    Override
-                  </button>
-                </div>
+          {finding.classification && confidenceChip && (
+            <Section title="Classification" icon={<Sparkles className="w-3.5 h-3.5 text-unbound-purple" />}>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[12px] bg-unbound-purple/10 text-unbound-purple border border-unbound-purple/20">
+                  {finding.classification.class}
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] bg-sev-low-bg text-sev-low border border-sev-low/30" title={`confidence ${Math.round(finding.classification.confidence * 100)}%`}>
+                  {confidenceChip}
+                </span>
+                <span className="text-[11px] mono text-unbound-text-muted">{finding.classification.model}</span>
+              </div>
+              <div className="text-[12px] text-unbound-text-secondary mt-2 leading-relaxed">
+                {finding.classification.reasoning}
+              </div>
+              <div className="flex gap-1.5 mt-2">
+                <button onClick={() => showToast('Classification confirmed · locked')} className="text-[11px] px-2 py-1 rounded bg-unbound-purple text-white">
+                  Confirm
+                </button>
+                <button onClick={() => showToast('Override recorded · classifier will retrain')} className="text-[11px] px-2 py-1 rounded border border-unbound-border hover:bg-unbound-bg-hover">
+                  Override
+                </button>
               </div>
             </Section>
           )}
 
-          <Section title="Why it matters">
-            <div className="text-[12.5px] text-unbound-text-secondary mb-3">Attack path:</div>
-            <ol className="space-y-1.5 text-[13px] text-unbound-text-secondary">
+          <Section title="Attack path">
+            <ol className="space-y-1 text-[13px] text-unbound-text-secondary">
               {finding.attack.map((step, i) => (
                 <li key={i} className="flex gap-2">
                   <span className="mono text-unbound-purple">{i + 1}.</span>
@@ -233,34 +184,17 @@ export default function IssueDrawer({
               ))}
             </ol>
             {finding.escalators.length > 0 && (
-              <div className="mt-4">
-                <div className="text-[12.5px] text-unbound-text-secondary mb-2">
-                  Blast radius on this device (active escalators):
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {finding.escalators.map((e) => (
-                    <span
-                      key={e}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] bg-sev-critical-bg text-sev-critical border border-sev-critical/20"
-                    >
-                      ✓ {e}
-                    </span>
-                  ))}
-                </div>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {finding.escalators.map((e) => (
+                  <span
+                    key={e}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] bg-sev-critical-bg text-sev-critical border border-sev-critical/20"
+                  >
+                    ✓ {e}
+                  </span>
+                ))}
               </div>
             )}
-          </Section>
-
-          <Section title="Severity explained">
-            <div className="rounded-md bg-unbound-bg border border-unbound-border p-3 text-[12.5px] space-y-1 mono">
-              <div>Base severity: <span className="font-semibold">{finding.severity === 'critical' ? 'High' : finding.severity}</span> (rule #{finding.ruleId})</div>
-              {finding.escalators.map((e) => (
-                <div key={e} className="text-sev-critical">↑ {e} &nbsp;+1 tier</div>
-              ))}
-              <div className="pt-2 border-t border-unbound-border mt-2 font-semibold">
-                = {finding.severity.toUpperCase()}
-              </div>
-            </div>
           </Section>
 
           <Section title="Remediation">
@@ -269,14 +203,11 @@ export default function IssueDrawer({
                 <div className="px-3 py-2 border-b border-unbound-border flex items-center justify-between bg-unbound-bg-hover">
                   <div className="text-[12.5px] font-semibold">User-step fix</div>
                   <div className="flex gap-1">
-                    {(['Slack DM', 'Email', 'Jira'] as const).map((fmt) => (
+                    {(['Slack', 'Email', 'Jira'] as const).map((fmt) => (
                       <button
                         key={fmt}
-                        onClick={() => {
-                          navigator.clipboard?.writeText(finding.userFix);
-                          showToast(`Copied as ${fmt}`);
-                        }}
-                        className="inline-flex items-center gap-1 px-2 py-1 text-[11px] rounded bg-white border border-unbound-border hover:bg-unbound-bg-hover"
+                        onClick={() => { navigator.clipboard?.writeText(finding.userFix); showToast(`Copied · ${fmt}`); }}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] rounded bg-white border border-unbound-border hover:bg-unbound-bg-hover"
                       >
                         <Copy className="w-3 h-3" /> {fmt}
                       </button>
@@ -289,44 +220,32 @@ export default function IssueDrawer({
               <div className="rounded-md border border-unbound-border">
                 <div className="px-3 py-2 border-b border-unbound-border flex items-center justify-between bg-unbound-bg-hover">
                   <div className="text-[12.5px] font-semibold flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-unbound-purple" /> Admin fix (fleet-wide)
+                    <ShieldCheck className="w-3.5 h-3.5 text-unbound-purple" /> Admin fix
                   </div>
-                  <button
-                    onClick={() => showToast(`Downloaded ${finding.adminFix.profile}`)}
-                    className="inline-flex items-center gap-1 px-2 py-1 text-[11px] rounded bg-unbound-purple text-white hover:bg-unbound-purple-hover"
-                  >
-                    <Download className="w-3 h-3" /> Download profile
+                  <button onClick={() => showToast(`Downloaded ${finding.adminFix.profile}`)} className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] rounded bg-unbound-purple text-white hover:bg-unbound-purple-hover">
+                    <Download className="w-3 h-3" /> Profile
                   </button>
                 </div>
-                <div className="p-3 text-[12.5px] space-y-1.5">
-                  <div>
-                    <span className="text-unbound-text-muted">Profile:</span>{' '}
-                    <span className="mono">{finding.adminFix.profile}</span>
-                  </div>
-                  <div>
-                    <span className="text-unbound-text-muted">Scope:</span> {finding.adminFix.scope}
-                  </div>
-                  <div>
-                    <span className="text-unbound-text-muted">Effect:</span>{' '}
-                    <span className="text-unbound-text-secondary">{finding.adminFix.effect}</span>
-                  </div>
+                <div className="p-3 text-[12.5px] space-y-1">
+                  <div className="mono">{finding.adminFix.profile}</div>
+                  <div className="text-unbound-text-tertiary">{finding.adminFix.scope}</div>
+                  <div className="text-unbound-text-secondary text-[12px]">{finding.adminFix.effect}</div>
                 </div>
               </div>
             </div>
           </Section>
 
           <Section title="Compliance">
-            <div className="grid grid-cols-2 gap-2 text-[12.5px]">
+            <div className="flex flex-wrap gap-1.5">
               {finding.compliance.map((c) => (
-                <div key={c.framework} className="flex items-start gap-2">
-                  <FileText className="w-3.5 h-3.5 text-unbound-text-muted mt-0.5 shrink-0" />
-                  <div>
-                    <div className="text-[11px] uppercase tracking-wide text-unbound-text-muted">
-                      {c.framework}
-                    </div>
-                    <div className="mono text-unbound-text-secondary">{c.controls}</div>
-                  </div>
-                </div>
+                <span
+                  key={c.framework}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] bg-unbound-bg border border-unbound-border"
+                  title={c.controls}
+                >
+                  <span className="font-medium">{c.framework}</span>
+                  <span className="mono text-unbound-text-muted">{c.controls}</span>
+                </span>
               ))}
             </div>
           </Section>
@@ -334,10 +253,10 @@ export default function IssueDrawer({
           <Section title="History">
             <ol className="space-y-1 text-[12.5px]">
               {finding.history.map((h, i) => (
-                <li key={i} className="flex gap-3">
-                  <Clock className="w-3.5 h-3.5 text-unbound-text-muted mt-0.5 shrink-0" />
+                <li key={i} className="flex gap-2">
+                  <Clock className="w-3 h-3 text-unbound-text-muted mt-1 shrink-0" />
                   <div>
-                    <span className="mono text-unbound-text-tertiary">{h.t}</span>
+                    <span className="mono text-unbound-text-tertiary text-[11.5px]">{h.t}</span>
                     <span className="text-unbound-text-secondary ml-2">{h.event}</span>
                   </div>
                 </li>
@@ -346,12 +265,12 @@ export default function IssueDrawer({
           </Section>
 
           {finding.related.length > 0 && (
-            <Section title="Related on this device">
-              <ul className="space-y-1.5 text-[12.5px]">
+            <Section title="Related">
+              <ul className="space-y-1 text-[12.5px]">
                 {finding.related.map((r) => (
                   <li key={r.id} className="flex items-center gap-2">
                     <SevBadge severity={r.severity} />
-                    <span className="text-unbound-text-secondary hover:text-unbound-purple cursor-pointer">{r.title}</span>
+                    <span className="text-unbound-text-secondary">{r.title}</span>
                   </li>
                 ))}
               </ul>
@@ -367,7 +286,7 @@ export default function IssueDrawer({
         onConfirm={() => {
           setWaiveOpen(false);
           setStatus('waived');
-          showToast('Waiver recorded with expiry + audit trail. Re-justification required before re-extension.');
+          showToast('Waiver recorded · audit ledger updated');
         }}
       />
       <ForwardModal
@@ -377,6 +296,28 @@ export default function IssueDrawer({
         body={finding.userFix}
       />
       {toast && <Toast message={toast} kind="success" />}
+    </div>
+  );
+}
+
+function SeverityPill({ finding }: { finding: Finding }) {
+  return (
+    <div className="relative group">
+      <SevBadge severity={finding.severity} />
+      <div className="absolute top-full left-0 mt-1 w-60 p-2 bg-unbound-text-primary text-white rounded-md text-[11px] opacity-0 group-hover:opacity-100 pointer-events-none transition z-10 shadow-lg">
+        <div className="font-semibold mb-1 flex items-center gap-1">
+          <Info className="w-3 h-3" /> Severity math
+        </div>
+        <div className="mono leading-relaxed">
+          Base High (#{finding.ruleId})
+          {finding.escalators.map((e) => (
+            <div key={e}>↑ {e} · +1 tier</div>
+          ))}
+          <div className="pt-1 mt-1 border-t border-white/30 font-semibold">
+            = {finding.severity.toUpperCase()}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

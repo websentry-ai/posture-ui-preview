@@ -6,8 +6,8 @@ export default function PoliciesPage() {
   return (
     <>
       <PageHeader
-        title="MDM policy library"
-        subtitle="Signed profile templates — one-click admin fix for findings. Closes loop via Path B."
+        title="MDM policies"
+        meta="13 signed templates · scoped rollout · rollback-on-regression"
         right={
           <div className="inline-flex rounded-md border border-unbound-border bg-white overflow-hidden text-[12px]">
             <button className="px-3 py-1.5 bg-unbound-purple/10 text-unbound-purple font-medium">Jamf</button>
@@ -21,7 +21,7 @@ export default function PoliciesPage() {
       <Card>
         <CardHeader
           title="Templates"
-          subtitle="Every profile signed by Unbound · deploy status tracked per fleet segment"
+          meta="Signed · deploy-status tracked"
           right={<ShieldCheck className="w-4 h-4 text-unbound-purple" />}
         />
         <table className="w-full text-[13px]">

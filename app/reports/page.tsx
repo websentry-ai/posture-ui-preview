@@ -4,17 +4,11 @@ import { FileDown, FileText, Package, Users, Calendar } from 'lucide-react';
 export default function ReportsPage() {
   return (
     <>
-      <PageHeader
-        title="Reports & evidence packets"
-        subtitle="Signed PDFs for the board · auditor deliverables · ad-hoc exports"
-      />
+      <PageHeader title="Reports" meta="Auditor-ready signed evidence" />
 
       {/* Executive report */}
       <Card className="mb-5">
-        <CardHeader
-          title="Quarterly signed posture report"
-          subtitle="Board-ready. Signed PDF + editable PPTX + underlying CSV."
-        />
+        <CardHeader title="Quarterly signed posture report" />
         <div className="p-5 grid grid-cols-3 gap-4">
           <Format icon={FileText} label="Signed PDF" desc="With Unbound signing-key attestation" />
           <Format icon={Users} label="Editable PPTX" desc="5 pre-built slides (trend, BU heatmap, MTTR)" />
@@ -33,10 +27,7 @@ export default function ReportsPage() {
 
       {/* Evidence packet */}
       <Card className="mb-5">
-        <CardHeader
-          title="Evidence packet — auditor deliverable"
-          subtitle="Per-framework zip with immutable ledgers"
-        />
+        <CardHeader title="Evidence packet" meta="Per-framework zip · immutable ledgers" />
         <div className="p-5 grid grid-cols-2 gap-x-8 gap-y-3 text-[13px]">
           <Check label="Framework" value="SOC 2 Type II" />
           <Check label="Period" value="Q1 2026" />
@@ -56,24 +47,6 @@ export default function ReportsPage() {
         </div>
       </Card>
 
-      {/* Weekly ops */}
-      <Card>
-        <CardHeader
-          title="Weekly ops report"
-          subtitle="Single page for team standup — what shipped, what's aging, MTTR by type"
-        />
-        <div className="p-5 grid grid-cols-4 gap-4 text-[13px]">
-          <Stat label="Findings closed" value="47" />
-          <Stat label="New this week" value="14" />
-          <Stat label="MTTR Critical" value="2.1d" />
-          <Stat label="MTTR High" value="4.2h" />
-        </div>
-        <div className="px-5 pb-5">
-          <button className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md border border-unbound-border bg-white hover:bg-unbound-bg-hover">
-            <Calendar className="w-3.5 h-3.5" /> View full ops report
-          </button>
-        </div>
-      </Card>
     </>
   );
 }

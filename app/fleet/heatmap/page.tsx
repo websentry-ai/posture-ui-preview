@@ -22,7 +22,7 @@ export default function HeatmapPage() {
     <>
       <PageHeader
         title="Fleet heatmap"
-        subtitle="Per-BU posture — drill into a cell to see underlying findings"
+        meta="Per-BU · click a cell to drill"
         right={
           <div className="flex items-center gap-2 text-[12px]">
             <span className="text-unbound-text-tertiary">Slice:</span>

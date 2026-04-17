@@ -19,8 +19,8 @@ export default function Page() {
   return (
     <>
       <PageHeader
-        title="Detection Rules"
-        subtitle="23 active · 2 demoted to Info · live FP rate published quarterly (noise-floor SLA)"
+        title="Detection rules"
+        meta="23 active · 2 info · FP rate · tune"
         right={
           <button className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover">
             <SlidersHorizontal className="w-3.5 h-3.5" /> Test a rule
@@ -31,7 +31,7 @@ export default function Page() {
       <Card>
         <CardHeader
           title="Active rules"
-          subtitle="Click any rule to edit severity, escalators, suppression patterns, or test against a config snippet"
+          meta="edit severity · escalators · suppression · test"
         />
         <table className="w-full text-[13px]">
           <thead>

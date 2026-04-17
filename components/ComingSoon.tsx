@@ -14,34 +14,20 @@ export default function ComingSoon({
 }) {
   return (
     <>
-      <PageHeader title={title} subtitle={subtitle} />
-      <Card className="overflow-hidden">
-        <div className="p-6 bg-gradient-to-br from-unbound-purple/5 to-white border-b border-unbound-border">
-          <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-md bg-unbound-purple/10 flex items-center justify-center shrink-0">
-              <Sparkles className="w-4 h-4 text-unbound-purple" />
-            </div>
-            <div>
-              <div className="text-[11px] uppercase tracking-wide text-unbound-purple font-semibold">
-                Coming {shipTarget}
-              </div>
-              <h2 className="text-[16px] font-semibold text-unbound-text-primary mt-0.5">
-                What this page will do
-              </h2>
-              <p className="text-[13px] text-unbound-text-tertiary mt-1 max-w-2xl">
-                {subtitle} The sections below describe the contract — schema is already modeled in the detection pipeline.
-              </p>
-            </div>
-          </div>
+      <PageHeader title={title} meta={`Shipping ${shipTarget}`} />
+      <Card className="p-5">
+        <div className="flex items-start gap-2 mb-4">
+          <Sparkles className="w-4 h-4 text-unbound-purple shrink-0 mt-0.5" />
+          <p className="text-[13px] text-unbound-text-secondary leading-relaxed">{subtitle}</p>
         </div>
-        <div className="p-6 space-y-5">
+        <ul className="space-y-1 text-[12.5px] text-unbound-text-tertiary">
           {bullets.map((b, i) => (
-            <div key={i}>
-              <div className="text-[13px] font-semibold text-unbound-text-primary">{b.h}</div>
-              <div className="text-[12.5px] text-unbound-text-tertiary mt-0.5 leading-relaxed">{b.d}</div>
-            </div>
+            <li key={i} className="flex gap-2">
+              <span className="text-unbound-text-muted">·</span>
+              <span><span className="font-medium text-unbound-text-secondary">{b.h}.</span> {b.d}</span>
+            </li>
           ))}
-        </div>
+        </ul>
       </Card>
     </>
   );

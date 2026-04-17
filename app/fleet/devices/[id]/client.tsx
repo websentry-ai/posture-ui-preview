@@ -6,18 +6,11 @@ import { Card, CardHeader } from '@/components/Card';
 import { SevBadge, Chip } from '@/components/SevBadge';
 import {
   ArrowLeft,
-  Check,
-  X,
   ChevronRight,
   Shield,
   Lock,
   Globe,
-  Zap,
   AlertTriangle,
-  Briefcase,
-  MapPin,
-  Phone,
-  User as UserIcon,
 } from 'lucide-react';
 import FreezeModal from '@/components/FreezeModal';
 import { Toast } from '@/components/Modal';
@@ -61,7 +54,7 @@ export default function DeviceDetailClient({
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => showToast('XSOAR incident created — pre-populated with device context, findings, evidence')}
+              onClick={() => showToast('SOAR case opened · pre-populated with device context + findings')}
               className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md border border-unbound-border bg-white hover:bg-unbound-bg-hover"
             >
               Send to SIEM/SOAR
@@ -76,64 +69,27 @@ export default function DeviceDetailClient({
         </div>
       </div>
 
-      {/* Who is this person */}
+      {/* Who + blast radius combined */}
       <Card className="mb-5">
-        <CardHeader title="Who is this" subtitle="Identity context from Okta SCIM + PagerDuty + on-call rota" right={<UserIcon className="w-4 h-4 text-unbound-purple" />} />
-        <div className="p-5 grid grid-cols-4 gap-5 text-[13px]">
-          <Field icon={<Briefcase className="w-3.5 h-3.5 text-unbound-text-muted" />} label="Role">
-            {device.role}
-          </Field>
-          <Field icon={<UserIcon className="w-3.5 h-3.5 text-unbound-text-muted" />} label="Manager">
-            {device.manager}
-          </Field>
-          <Field icon={<MapPin className="w-3.5 h-3.5 text-unbound-text-muted" />} label="Location">
-            {device.location}
-          </Field>
-          <Field icon={<Phone className="w-3.5 h-3.5 text-unbound-text-muted" />} label="On-call">
-            {device.onCall}
-          </Field>
-          <Field label="Last login" icon={<Globe className="w-3.5 h-3.5 text-unbound-text-muted" />}>
-            {device.lastLogin}
-          </Field>
-          <Field label="BU">{device.bu}</Field>
+        <div className="p-5 grid grid-cols-4 gap-4 text-[12.5px]">
+          <Field label="Role">{device.role}</Field>
+          <Field label="Manager">{device.manager}</Field>
+          <Field label="Location">{device.location}</Field>
+          <Field label="On-call">{device.onCall}</Field>
+          <Field label="Last login">{device.lastLogin}</Field>
           <Field label="Agents">{device.agents}</Field>
-          <Field label="Posture chips">
-            <div className="flex flex-wrap gap-1 mt-0.5">
-              {device.chips.map((c) => (<Chip key={c}>{c}</Chip>))}
-            </div>
-          </Field>
+          <Field label="MDM">{device.mdm}</Field>
+          <Field label="BU">{device.bu}</Field>
         </div>
-      </Card>
-
-      {/* Blast radius */}
-      <Card className="mb-5">
-        <CardHeader
-          title="Blast radius"
-          subtitle="Escalators that drive severity math across findings on this device"
-          right={<Zap className="w-4 h-4 text-unbound-purple" />}
-        />
-        <div className="p-5 grid grid-cols-2 gap-x-8 gap-y-2 text-[13px]">
-          {[
-            { on: true, label: 'Cloud creds on disk', detail: '~/.aws/credentials, ~/.config/gcloud' },
-            { on: true, label: 'Admin / sudo rights', detail: 'current user in admin group' },
-            { on: true, label: 'Prod git write access', detail: '17 repos on github.com/corp' },
-            { on: true, label: 'FileVault on', detail: 'disk encryption enforced' },
-            { on: true, label: 'SIP on', detail: 'macOS System Integrity Protection enforced' },
-            { on: true, label: 'Code-signing enforced', detail: 'spctl gatekeeper enabled' },
-            { on: false, label: 'Sandbox read-only', detail: 'currently writable — escalator for #2, #3' },
-          ].map((f) => (
-            <div key={f.label} className="flex items-start gap-2">
-              {f.on ? (
-                <Check className="w-4 h-4 text-sev-low shrink-0 mt-0.5" />
-              ) : (
-                <X className="w-4 h-4 text-sev-critical shrink-0 mt-0.5" />
-              )}
-              <div>
-                <div className="text-unbound-text-primary font-medium">{f.label}</div>
-                <div className="text-[12px] text-unbound-text-tertiary">{f.detail}</div>
-              </div>
-            </div>
-          ))}
+        <div className="px-5 pb-4 flex items-center gap-2 flex-wrap border-t border-unbound-border pt-3">
+          <span className="text-[11px] uppercase tracking-wide text-unbound-text-muted font-medium mr-1">Blast radius</span>
+          <Chip>✓ cloud creds</Chip>
+          <Chip>✓ admin</Chip>
+          <Chip>✓ prod git (17 repos)</Chip>
+          <Chip>✓ FileVault</Chip>
+          <Chip>✓ SIP</Chip>
+          <Chip>✓ code-signed</Chip>
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-sev-critical-bg text-sev-critical border border-sev-critical/30">✗ sandbox writable</span>
         </div>
       </Card>
 
@@ -212,7 +168,7 @@ export default function DeviceDetailClient({
       {tab === 'inventory' && (
         <div className="space-y-4 mb-5">
           <Card>
-            <CardHeader title="MCP servers" subtitle="Installed on this device" />
+            <CardHeader title="MCP servers" />
             <div className="p-5 space-y-2 text-[13px]">
               <div className="flex items-center justify-between p-3 rounded-md border border-unbound-border">
                 <div>
@@ -232,7 +188,7 @@ export default function DeviceDetailClient({
           </Card>
 
           <Card>
-            <CardHeader title="Hooks" subtitle="Pre/Post/Session" />
+            <CardHeader title="Hooks" />
             <div className="p-5 space-y-2 text-[13px]">
               <div className="flex items-center justify-between p-3 rounded-md border border-sev-critical/40 bg-sev-critical-bg/30">
                 <div>
@@ -245,7 +201,7 @@ export default function DeviceDetailClient({
           </Card>
 
           <Card>
-            <CardHeader title="Agent binaries" subtitle="Version + signing attestation" />
+            <CardHeader title="Agent binaries" />
             <div className="p-5 grid grid-cols-2 gap-3 text-[13px]">
               <Field label="Claude Code">v1.0.3 · signed · notarized ✓</Field>
               <Field label="Cursor">v1.4.2 · signed · notarized ✓</Field>
@@ -257,7 +213,7 @@ export default function DeviceDetailClient({
       {/* Configuration tab */}
       {tab === 'configuration' && (
         <Card className="mb-5">
-          <CardHeader title="Configuration drift" subtitle="Current state vs last signed baseline — changes since 2026-04-12" />
+          <CardHeader title="Configuration drift" meta="vs baseline · 2026-04-12" />
           <div className="p-5 text-[12px] mono">
             <div className="rounded-md overflow-hidden border border-unbound-border">
               <DiffRow sign="-" content={'"defaultMode": "default"'} />
@@ -286,7 +242,7 @@ export default function DeviceDetailClient({
       {/* Timeline tab */}
       {tab === 'timeline' && (
         <Card className="mb-5">
-          <CardHeader title="Device timeline" subtitle="Config changes, scans, findings lifecycle — tamper-evident" />
+          <CardHeader title="Device timeline" />
           <div className="p-5">
             <div className="relative">
               <div className="absolute left-[7px] top-2 bottom-2 w-px bg-unbound-border" />
@@ -317,7 +273,7 @@ export default function DeviceDetailClient({
       <Card>
         <CardHeader
           title="Pivot"
-          subtitle="2am incident pivot — blast-radius check across the fleet"
+          meta="Blast-radius check · fleet pivot"
         />
         <div className="p-5 grid grid-cols-2 gap-3 text-[13px]">
           <Link href="/issues" className="flex items-center justify-between p-3 rounded-md border border-unbound-border hover:bg-unbound-bg-hover">
@@ -369,22 +325,11 @@ export default function DeviceDetailClient({
   );
 }
 
-function Field({
-  label,
-  children,
-  icon,
-}: {
-  label: string;
-  children: React.ReactNode;
-  icon?: React.ReactNode;
-}) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-unbound-text-muted">
-        {icon}
-        {label}
-      </div>
-      <div className="mt-0.5 text-[13px] text-unbound-text-secondary">{children}</div>
+      <div className="text-[10px] uppercase tracking-wide text-unbound-text-muted">{label}</div>
+      <div className="mt-0.5 text-unbound-text-secondary">{children}</div>
     </div>
   );
 }

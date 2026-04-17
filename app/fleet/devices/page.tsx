@@ -9,7 +9,7 @@ export default function DevicesPage() {
     <>
       <PageHeader
         title="Devices"
-        subtitle="487 total · 472 managed · 15 BYOD · 37 CI runners"
+        meta="487 total · 472 managed · 15 BYOD · 37 CI runners"
         right={
           <div className="flex items-center gap-2">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 border border-unbound-border rounded-md bg-white text-[12px]">

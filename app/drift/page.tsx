@@ -44,8 +44,8 @@ export default function Page() {
   return (
     <>
       <PageHeader
-        title="Drift & Baselines"
-        subtitle="287 devices baselined · 17 drift events this week · per-device signed config snapshots"
+        title="Drift"
+        meta="287 baselined · 12,418 signed snapshots · hourly Sigstore anchor · key sha256:7d…a81c"
         right={
           <div className="inline-flex rounded-md border border-unbound-border bg-white overflow-hidden text-[12px]">
             <button className="px-3 py-1.5 bg-unbound-purple/10 text-unbound-purple font-medium">Material only</button>
@@ -57,7 +57,7 @@ export default function Page() {
       <Card>
         <CardHeader
           title="Recent drift events"
-          subtitle="Finding #25 — signed baseline per device; diff flagged on material change"
+          meta="#25 · signed baseline · diff on material change"
           right={<GitBranch className="w-4 h-4 text-unbound-purple" />}
         />
         <table className="w-full text-[13px]">
@@ -109,22 +109,6 @@ export default function Page() {
         </table>
       </Card>
 
-      <Card className="mt-5">
-        <CardHeader title="Baseline integrity" subtitle="Signed snapshots backing every drift event" />
-        <div className="p-5 grid grid-cols-4 gap-5 text-[13px]">
-          {[
-            { label: 'Baselined devices', value: '287' },
-            { label: 'Signed snapshots', value: '12,418' },
-            { label: 'Hash-chain anchors', value: 'hourly' },
-            { label: 'Signing key', value: 'sha256:7d…a81c' },
-          ].map((s) => (
-            <div key={s.label} className="p-3 rounded-md border border-unbound-border">
-              <div className="text-[10px] uppercase tracking-wide text-unbound-text-muted">{s.label}</div>
-              <div className="text-[15px] font-semibold text-unbound-text-primary mt-1 mono">{s.value}</div>
-            </div>
-          ))}
-        </div>
-      </Card>
     </>
   );
 }

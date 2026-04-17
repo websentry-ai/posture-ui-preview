@@ -15,8 +15,8 @@ export default function MCPCatalog() {
   return (
     <>
       <PageHeader
-        title="Approved MCP Catalog"
-        subtitle="47 entries · 38 from Unbound curated · 9 your org"
+        title="MCP catalog"
+        meta="47 approved · 38 Unbound curated · 9 your org · 3 inbox"
         right={
           <div className="flex items-center gap-2">
             <button className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md border border-unbound-border bg-white hover:bg-unbound-bg-hover">
@@ -46,7 +46,7 @@ export default function MCPCatalog() {
 
       {/* Inbox */}
       <Card className="mb-5">
-        <CardHeader title="MCP inbox — review queue" subtitle="Sorted by device count" right={<Sparkles className="w-4 h-4 text-unbound-purple" />} />
+        <CardHeader title="Inbox" meta="sorted by device count" right={<Sparkles className="w-4 h-4 text-unbound-purple" />} />
         <div className="divide-y divide-unbound-border">
           {mcpInbox.map((m) => (
             <div key={m.name} className="p-5 hover:bg-unbound-bg-hover">
@@ -93,7 +93,7 @@ export default function MCPCatalog() {
       <Card>
         <CardHeader
           title="Approved MCPs"
-          subtitle="Admin-curated allowlist — drives Finding #6 detection"
+          meta="Admin-curated allowlist · drives #6"
           right={
             <div className="text-[11px] text-unbound-text-tertiary">
               Unbound proposed 4 new entries  ·{' '}

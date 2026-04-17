@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { FileDown, ChevronRight } from 'lucide-react';
 
 type Framework = keyof typeof controls;
-const frameworks: Framework[] = ['NIST CSF 2.0', 'SOC 2', 'ISO 27001', 'FedRAMP Mod'];
+const frameworks: Framework[] = ['NIST CSF 2.0', 'SOC 2', 'ISO 27001'];
 
 export default function ControlsPage() {
   const [fw, setFw] = useState<Framework>('NIST CSF 2.0');
@@ -17,8 +17,8 @@ export default function ControlsPage() {
   return (
     <>
       <PageHeader
-        title="Compliance controls"
-        subtitle={`${fw} — per-control drill with finding back-links`}
+        title="Compliance"
+        meta={fw}
         right={
           <div className="flex items-center gap-2">
             <div className="inline-flex rounded-md border border-unbound-border bg-white overflow-hidden text-[12px]">
@@ -48,7 +48,7 @@ export default function ControlsPage() {
       />
 
       <Card>
-        <CardHeader title="Controls" subtitle="Click any control to drill into findings mapped to it" />
+        <CardHeader title="Controls" />
         <table className="w-full text-[13px]">
           <thead>
             <tr className="text-left text-[11px] uppercase tracking-wide text-unbound-text-muted border-b border-unbound-border bg-unbound-bg-hover">
@@ -93,9 +93,6 @@ export default function ControlsPage() {
         </table>
       </Card>
 
-      <div className="mt-4 text-[11.5px] text-unbound-text-tertiary">
-        Every control → findings mapping is bidirectional: each Issue drawer shows the reverse mapping back to this page. Evidence packet exports are scoped per framework and signed.
-      </div>
     </>
   );
 }

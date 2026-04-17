@@ -95,7 +95,7 @@ export default function IssuesPage() {
     <>
       <PageHeader
         title="Issues"
-        subtitle="The workbench — triage, assign, act. Keyboard: j/k cycle · w waive · n not-risky · m remediated · f forward"
+        meta={`${findings.length} open · shortcuts ?`}
         right={
           <div className="flex items-center gap-2">
             <button className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] rounded-md border border-unbound-border bg-white hover:bg-unbound-bg-hover">
