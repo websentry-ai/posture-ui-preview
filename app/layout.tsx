@@ -19,6 +19,9 @@ export const metadata: Metadata = {
   title: 'Unbound Posture — Preview',
   description:
     'Preview of the revamped Posture & Discovery section. Mock data, static export.',
+  icons: {
+    icon: [{ url: './favicon.ico', type: 'image/x-icon' }],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

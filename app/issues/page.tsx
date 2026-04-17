@@ -10,6 +10,7 @@ import IssueDrawer from '@/components/IssueDrawer';
 import { Toast } from '@/components/Modal';
 import { ChevronDown, ChevronRight, Filter, Upload, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import AppLink from '@/components/AppLink';
 
 type TabState = 'open' | 'triage' | 'waived' | 'closed';
 
@@ -47,26 +48,29 @@ function IssuesPageInner() {
     showToast(`Filter "${key}" removed`);
   };
 
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && openFinding) setOpenFinding(null);
-      if (!openFinding) return;
-      if (e.key === 'j' || e.key === 'k') {
-        const i = findings.findIndex((f) => f.id === openFinding.id);
-        const dir = e.key === 'j' ? 1 : -1;
-        setOpenFinding(findings[(i + dir + findings.length) % findings.length]);
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [openFinding]);
-
   const visible = useMemo(() => {
     if (tab !== 'open') return [];
     if (!ruleFilter) return findings;
     const id = Number(ruleFilter);
     return findings.filter((f) => f.ruleId === id);
   }, [tab, ruleFilter]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && openFinding) setOpenFinding(null);
+      if (!openFinding) return;
+      if (e.key === 'j' || e.key === 'k') {
+        // Cycle within the currently-filtered/visible list, not the global array.
+        // Falls back to global findings only if current filter hid the open item.
+        const list = visible.length > 0 && visible.some((f) => f.id === openFinding.id) ? visible : findings;
+        const i = list.findIndex((f) => f.id === openFinding.id);
+        const dir = e.key === 'j' ? 1 : -1;
+        setOpenFinding(list[(i + dir + list.length) % list.length]);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [openFinding, visible]);
 
   const groups = useMemo(() => {
     const g: Record<number, Finding[]> = {};
@@ -110,8 +114,10 @@ function IssuesPageInner() {
   const close = () => setOpenFinding(null);
   const navigate = (dir: 1 | -1) => {
     if (!openFinding) return;
-    const i = findings.findIndex((f) => f.id === openFinding.id);
-    const next = findings[(i + dir + findings.length) % findings.length];
+    // Same filtered-list logic as j/k — cycle within the visible queue.
+    const list = visible.length > 0 && visible.some((f) => f.id === openFinding.id) ? visible : findings;
+    const i = list.findIndex((f) => f.id === openFinding.id);
+    const next = list[(i + dir + list.length) % list.length];
     setOpenFinding(next);
   };
 
@@ -164,13 +170,13 @@ function IssuesPageInner() {
         {!chipsCleared['assigned'] && <FilterChip label="assigned: me" onRemove={() => clearChip('assigned')} />}
         {!chipsCleared['first-seen'] && <FilterChip label="first-seen: 7d" onRemove={() => clearChip('first-seen')} />}
         {ruleFilter && (
-          <a
+          <AppLink
             href="/issues"
             className="inline-flex items-center gap-1 px-2 py-1 text-[12px] rounded-md bg-unbound-purple text-white"
           >
             rule: #{ruleFilter}
             <span className="ml-1 opacity-70 hover:opacity-100">×</span>
-          </a>
+          </AppLink>
         )}
         <button
           onClick={() => showToast('Filter builder — coming soon')}

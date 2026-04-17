@@ -18,17 +18,14 @@ export type PendingAction = {
 };
 
 const KEY = 'posture-preview-store-v1';
+const EMPTY_STORE: Store = { pendingActions: [], frozenDevices: {}, approvedMcps: [] };
 
 function readStore(): Store {
-  if (typeof window === 'undefined') return { pendingActions: [], frozenDevices: {}, approvedMcps: [] };
+  if (typeof window === 'undefined') return EMPTY_STORE;
   try {
-    return JSON.parse(localStorage.getItem(KEY) || 'null') ?? {
-      pendingActions: [],
-      frozenDevices: {},
-      approvedMcps: [],
-    };
+    return JSON.parse(localStorage.getItem(KEY) || 'null') ?? EMPTY_STORE;
   } catch {
-    return { pendingActions: [], frozenDevices: {}, approvedMcps: [] };
+    return EMPTY_STORE;
   }
 }
 
@@ -45,7 +42,9 @@ export function useStore<T>(selector: (s: Store) => T): [T, {
   clearFrozen: (deviceId: string) => void;
   addApprovedMcp: (name: string) => void;
 }] {
-  const [value, setValue] = useState<T>(() => selector(readStore()));
+  // Initialize with empty store so SSR and client first-render match.
+  // localStorage hydration happens after mount inside the effect.
+  const [value, setValue] = useState<T>(() => selector(EMPTY_STORE));
 
   useEffect(() => {
     const sync = () => setValue(selector(readStore()));
