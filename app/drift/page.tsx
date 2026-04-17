@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { PageHeader, Card, CardHeader } from '@/components/Card';
 import { GitBranch, Eye } from 'lucide-react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { Toast } from '@/components/Modal';
 import { cn } from '@/lib/utils';
 

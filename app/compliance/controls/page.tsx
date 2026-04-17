@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { PageHeader, Card, CardHeader } from '@/components/Card';
 import { SevBadge } from '@/components/SevBadge';
 import { controls } from '@/lib/mock-data';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useRouter } from 'next/navigation';
 import { FileDown, ChevronRight } from 'lucide-react';
 

@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { PageHeader, Card, CardHeader } from '@/components/Card';
 import { SevBadge, Chip } from '@/components/SevBadge';
 import { devices } from '@/lib/mock-data';
