@@ -5,6 +5,7 @@ import { PageHeader, Card, CardHeader } from '@/components/Card';
 import { GitBranch, Eye } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { Toast } from '@/components/Modal';
+import { Help } from '@/components/Help';
 import { cn } from '@/lib/utils';
 
 const drifts = [
@@ -54,7 +55,13 @@ export default function Page() {
     <>
       <PageHeader
         title="Drift"
-        meta="287 baselined · 12,418 signed snapshots · hourly Sigstore anchor · key sha256:7d…a81c"
+        meta={
+          <>
+            287 baselined · 12,418 signed snapshots · hourly{' '}
+            <Help term="Sigstore anchor" explain="Public transparency log (Sigstore / Rekor). Auditors can independently verify this timeline wasn't retroactively edited." />
+            {' '}· key sha256:7d…a81c
+          </>
+        }
         right={
           <div className="inline-flex rounded-md border border-unbound-border bg-white overflow-hidden text-[12px]">
             <button onClick={() => setFilter('material')} className={cn('px-3 py-1.5', filter === 'material' ? 'bg-unbound-purple/10 text-unbound-purple font-medium' : 'text-unbound-text-tertiary hover:bg-unbound-bg-hover')}>Material only</button>

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { PageHeader, Card, CardHeader } from '@/components/Card';
 import { Check, Globe, Key, Shield, Users, Download, Rocket } from 'lucide-react';
 import { Toast } from '@/components/Modal';
+import { Help } from '@/components/Help';
 
 export default function Page() {
   const [toast, setToast] = useState<string | null>(null);
@@ -38,7 +39,7 @@ export default function Page() {
         <CardHeader title="Data handling" />
         <div className="p-5 grid grid-cols-2 gap-5 text-[13px]">
           <Row icon={<Globe className="w-4 h-4 text-unbound-purple" />} label="Region" value="us-east-1 (primary) · eu-west-1 (EU tenants)" />
-          <Row icon={<Key className="w-4 h-4 text-unbound-purple" />} label="Encryption" value="BYOK (AWS KMS) · FIPS 140-3 validated" />
+          <Row icon={<Key className="w-4 h-4 text-unbound-purple" />} label="Encryption" value={<><Help term="BYOK" explain="Bring-Your-Own-Key — encryption key lives in your cloud KMS. Unbound never holds it." /> (AWS KMS) · <Help term="FIPS 140-3 validated" explain="US federal cryptographic standard. Required for FedRAMP / DoD / financial-services procurement." /></>} />
           <Row icon={<Shield className="w-4 h-4 text-unbound-purple" />} label="Classifier" value="Local (no data egress) · on-device agent" />
           <Row icon={<Users className="w-4 h-4 text-unbound-purple" />} label="RBAC" value="CISO · SOC lead · analyst · read-only auditor (via Okta groups)" />
           <Row icon={<Download className="w-4 h-4 text-unbound-purple" />} label="Retention" value="13 months default · configurable 6–36 months" />
@@ -69,7 +70,7 @@ function Step({ done, pending, title, detail }: { done?: boolean; pending?: bool
   );
 }
 
-function Row({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function Row({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start gap-2">
       <div className="mt-0.5">{icon}</div>

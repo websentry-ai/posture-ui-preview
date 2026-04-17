@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { PageHeader, Card, CardHeader } from '@/components/Card';
 import { FileDown } from 'lucide-react';
 import { Toast } from '@/components/Modal';
+import { Help } from '@/components/Help';
 
 const events = [
   { t: '2026-04-17 02:00', a: 'Waiver proposal', detail: 'auto-generated for F-00272 (#4 MITM on marcus.w)', actor: 'system' },
@@ -27,7 +28,7 @@ export default function Page() {
     <>
       <PageHeader
         title="Timeline"
-        meta="Tamper-evident · signed hash chain"
+        meta={<>Tamper-evident · <Help term="signed hash chain" explain="Every event is SHA-256 chained and anchored hourly to Sigstore/Rekor public transparency log. Third parties can verify evidence wasn't retroactively edited." /></>}
         right={
           <div className="flex items-center gap-2">
             <select className="px-3 py-1.5 text-[12px] border border-unbound-border rounded-md bg-white">

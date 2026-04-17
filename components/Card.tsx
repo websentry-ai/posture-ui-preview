@@ -38,7 +38,7 @@ export function PageHeader({
   right,
 }: {
   title: string;
-  meta?: string;
+  meta?: React.ReactNode;
   subtitle?: string;
   right?: React.ReactNode;
 }) {

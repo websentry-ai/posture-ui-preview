@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { PageHeader, Card, CardHeader } from '@/components/Card';
 import { FileDown, FileText, Package, Users } from 'lucide-react';
 import { Toast } from '@/components/Modal';
+import { Help } from '@/components/Help';
 
 export default function ReportsPage() {
   const [toast, setToast] = useState<string | null>(null);
@@ -41,7 +42,7 @@ export default function ReportsPage() {
           <Check label="Framework" value="SOC 2 Type II" />
           <Check label="Period" value="Q1 2026" />
           <Check label="Scope" value="Whole fleet" />
-          <Check label="Output" value="PDF + ZIP + FedRAMP POA&M XLSX" />
+          <Check label="Output" value={<>PDF + ZIP + FedRAMP <Help term="POA&M" explain="Plan of Actions & Milestones — the FedRAMP-mandated remediation-tracker format (XLSX)." /> XLSX</>} />
         </div>
         <div className="px-5 pb-4 text-[12px] text-unbound-text-tertiary">
           Bundle contents:{' '}
@@ -70,7 +71,7 @@ function Format({ icon: Icon, label, desc }: { icon: any; label: string; desc: s
   );
 }
 
-function Check({ label, value }: { label: string; value: string }) {
+function Check({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
       <div className="text-[10px] uppercase tracking-wide text-unbound-text-muted">{label}</div>

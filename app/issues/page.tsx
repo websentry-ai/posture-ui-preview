@@ -29,6 +29,7 @@ function IssuesPageInner() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [tab, setTab] = useState<TabState>('open');
   const [toast, setToast] = useState<string | null>(null);
+  const [chipsCleared, setChipsCleared] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (ruleFilter) {
@@ -40,6 +41,10 @@ function IssuesPageInner() {
   const showToast = (m: string) => {
     setToast(m);
     setTimeout(() => setToast(null), 2400);
+  };
+  const clearChip = (key: string) => {
+    setChipsCleared((p) => ({ ...p, [key]: true }));
+    showToast(`Filter "${key}" removed`);
   };
 
   useEffect(() => {
@@ -155,9 +160,9 @@ function IssuesPageInner() {
 
       {/* filter bar */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <FilterChip label="severity: Critical, High" onRemove={() => showToast('Filter removed')} />
-        <FilterChip label="assigned: me" onRemove={() => showToast('Filter removed')} />
-        <FilterChip label="first-seen: 7d" onRemove={() => showToast('Filter removed')} />
+        {!chipsCleared['severity'] && <FilterChip label="severity: Critical, High" onRemove={() => clearChip('severity')} />}
+        {!chipsCleared['assigned'] && <FilterChip label="assigned: me" onRemove={() => clearChip('assigned')} />}
+        {!chipsCleared['first-seen'] && <FilterChip label="first-seen: 7d" onRemove={() => clearChip('first-seen')} />}
         {ruleFilter && (
           <a
             href="/issues"
