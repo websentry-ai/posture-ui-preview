@@ -203,55 +203,82 @@ export default function Overview() {
         </div>
       </Card>
 
-      {/* Row 1 — narrative (3/5) + Governed × Risk quadrant (2/5) */}
-      <div className="grid grid-cols-5 gap-5 mb-5">
-        <Card className="col-span-3">
-          <CardHeader
-            title="What changed since Friday 17:00"
-            meta="narrative summary · regenerated every scan"
-            right={
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-unbound-purple/10 text-unbound-purple text-[10px] font-semibold uppercase tracking-wider">
-                <Brain className="w-3 h-3" /> AI
-              </span>
-            }
-          />
-          <div className="p-5 text-[13px] text-unbound-text-secondary leading-relaxed space-y-2">
-            <p>
-              <span className="font-semibold text-unbound-text-primary">3 new Criticals</span> landed over the weekend. Most severe: a malicious hook on jenna.l's DevOps laptop — a project-level `.claude/settings.json` piping pastebin content to bash. Classifier confidence 0.97.
-            </p>
-            <p>
-              <span className="font-semibold text-unbound-text-primary">Sarah's YOLO is back</span>. Her 2026-03-22 waiver expired Friday 23:59; she flipped bypassPermissions on again 2h into Monday. Same device now composes the YOLO-execution chain with cloud-creds and prod-git-write — the exact combo that caused last quarter's Eng-Platform incident.
-            </p>
-            <p>
-              <span className="font-semibold text-unbound-text-primary">Supply-chain inbox grew</span>: 2 unvetted MCPs added fleet-wide (unofficial-gh-mcp@latest on 4 devices; mcp-random-analytics on 1). Neither is on the approved catalog.
-            </p>
-            <p className="text-unbound-text-tertiary text-[12px]">
-              Suggested sequence: break the YOLO chain on Sarah+Raj+devtest-3 with one policy push (collapses 3 findings), then triage the hook on jenna.l before her on-call window starts in 14h.
-            </p>
+      {/* HERO SUMMARY — one designed surface: quadrant + narrative in a single card */}
+      <Card className="mb-6 overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-3.5 border-b border-unbound-border bg-unbound-bg-hover/40">
+          <div className="flex items-baseline gap-3">
+            <h3 className="text-[13px] font-semibold text-unbound-text-primary tracking-tight">Posture summary</h3>
+            <span className="text-[11px] text-unbound-text-muted">regenerated every scan · 38m ago</span>
           </div>
-        </Card>
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-unbound-purple/10 text-unbound-purple text-[10px] font-semibold uppercase tracking-wider">
+            <Brain className="w-3 h-3" /> AI
+          </span>
+        </div>
+        <div className="grid grid-cols-5 divide-x divide-unbound-border">
+          <div className="col-span-3 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-unbound-text-muted">
+                Governed × Risk · device posture
+              </div>
+              <span
+                title="Governed = MDM-enrolled with posture profile applied (Jamf / Intune / Kandji). Ungoverned = BYOD or unmanaged."
+                className="inline-flex items-center gap-1 text-[10.5px] text-unbound-text-muted cursor-help"
+              >
+                <Info className="w-3 h-3" />
+                what counts as governed?
+              </span>
+            </div>
+            <div className="grid grid-cols-[52px_1fr_1fr] gap-2 items-stretch">
+              <div />
+              <AxisLabel>Ungoverned</AxisLabel>
+              <AxisLabel>Governed</AxisLabel>
 
-        <GovernedRiskQuadrant
-          cells={cells}
-          onCellClick={(label) => showToast(`Filtered /issues by ${label}`)}
-        />
-      </div>
+              <YAxisLabel>High</YAxisLabel>
+              <BigQuadCell count={cells.blockNow} title="Block now" tone="danger" onClick={() => showToast('Filtered /issues by ungoverned + high → Block now')} />
+              <BigQuadCell count={cells.tighten} title="Tighten scopes" tone="amber" onClick={() => showToast('Filtered /issues by governed + high → Tighten scopes')} />
 
-      {/* Row 2 — dominant visualization: attack-path chains, full width */}
-      <Card className="mb-5">
+              <YAxisLabel>Low / med</YAxisLabel>
+              <BigQuadCell count={cells.triage} title="Triage & decide" tone="yellow" onClick={() => showToast('Filtered /issues by ungoverned + low/med → Triage & decide')} />
+              <BigQuadCell count={cells.allClear} title="All clear" tone="green" onClick={() => showToast('Filtered /issues by governed + low/med → All clear')} />
+            </div>
+          </div>
+          <div className="col-span-2 p-6">
+            <div className="text-[10px] font-bold uppercase tracking-widest text-unbound-text-muted mb-4">
+              What changed since Friday 17:00
+            </div>
+            <div className="text-[13px] text-unbound-text-secondary leading-relaxed space-y-2.5">
+              <p>
+                <span className="font-semibold text-unbound-text-primary">3 new Criticals</span> over the weekend. Most severe: a malicious hook on jenna.l's laptop — project-level `.claude/settings.json` piping pastebin to bash. Classifier 0.97.
+              </p>
+              <p>
+                <span className="font-semibold text-unbound-text-primary">Sarah's YOLO is back</span>. Waiver expired Friday 23:59; flipped bypassPermissions 2h into Monday. Same combo that broke Eng-Platform last quarter.
+              </p>
+              <p>
+                <span className="font-semibold text-unbound-text-primary">Supply-chain inbox grew</span>: 2 unvetted MCPs added fleet-wide. Neither on catalog.
+              </p>
+              <p className="pt-1 border-t border-unbound-border text-unbound-text-tertiary text-[12px] leading-relaxed">
+                <span className="font-semibold text-unbound-purple">Suggested:</span> break YOLO chain on Sarah+Raj+devtest-3 with one policy push (collapses 3 findings), then triage jenna.l before her on-call window in 14h.
+              </p>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* DOMINANT VIZ — attack-path chains, the hero visualization */}
+      <Card className="mb-6 bg-gradient-to-b from-white to-unbound-bg-hover/20">
         <CardHeader
-          title="Attack-path chains"
-          meta={`${chains.length} active · break a single edge to collapse the chain fleet-wide`}
+          title="Active attack-path chains"
+          meta={`${chains.length} chains detected · break a single edge to collapse fleet-wide · curated + AI-composed`}
           right={<Zap className="w-4 h-4 text-unbound-purple" />}
         />
-        <div className="p-5 grid grid-cols-2 gap-x-6 gap-y-5">
+        <div className="p-7 grid grid-cols-2 gap-x-10 gap-y-8">
           {chains.map((c) => (
-            <div key={c.name} className="pb-1 last:pb-0">
-              <div className="flex items-center justify-between mb-1.5">
-                <div className="text-[12.5px] font-semibold text-unbound-text-primary">
-                  {c.name}
+            <div key={c.name}>
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-[13.5px] font-semibold text-unbound-text-primary tracking-tight">{c.name}</span>
                   {c.kind === 'dynamic' && (
-                    <span className="ml-2 text-[10px] font-semibold uppercase tracking-wider text-unbound-purple">novel · AI-composed</span>
+                    <span className="text-[9.5px] font-bold uppercase tracking-widest text-unbound-purple">novel · AI</span>
                   )}
                 </div>
                 <SevBadge severity="critical">{c.deviceCount} device{c.deviceCount > 1 ? 's' : ''}</SevBadge>
@@ -270,66 +297,60 @@ export default function Overview() {
         </div>
       </Card>
 
-      {/* Row 3 — secondary rail: top devices + SLA/waivers */}
-      <div className="grid grid-cols-5 gap-5 mb-5">
-        <Card className="col-span-3">
-          <CardHeader title="Top risk-weighted devices" meta="5 of 730 · open Device 360 to see evidence" />
-          <table className="w-full text-[13px]">
-            <thead>
-              <tr className="text-left text-[11px] uppercase tracking-wide text-unbound-text-muted border-b border-unbound-border">
-                <th className="px-5 py-2 font-medium">User</th>
-                <th className="px-3 py-2 font-medium">BU</th>
-                <th className="px-3 py-2 font-medium">Severity</th>
-                <th className="px-3 py-2 font-medium">Escalators</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                { u: 'sarah.chen', bu: 'Eng-Platform', sev: '3C / 5H', esc: ['cloud creds', 'admin', 'prod repos'], s: 'critical' as const, id: 'HGXF2XKH45' },
-                { u: 'devtest-3', bu: 'QA', sev: '2C / 1H', esc: ['IMDS reach', 'no sandbox'], s: 'critical' as const, id: 'K43J9S77Z0' },
-                { u: 'marcus.w', bu: 'Finance', sev: '1C / 7H', esc: ['BYOD', 'corp repos', 'MITM CA'], s: 'critical' as const, id: 'PQ77XABC92' },
-                { u: 'raj.patel', bu: 'Eng-AI', sev: '1C / 2H', esc: ['personal acct', 'admin'], s: 'critical' as const, id: 'LMQP9P1QV2' },
-                { u: 'jenna.l', bu: 'DevOps', sev: '1C / 8H', esc: ['hook!', 'MCP!', 'no-policy'], s: 'critical' as const, id: 'TTY4X0ABCD' },
-              ].map((r) => (
-                <tr key={r.u} className="border-b border-unbound-border last:border-0 hover:bg-unbound-bg-hover">
-                  <td className="px-5 py-3">
-                    <Link href={`/fleet/devices/${r.id}`} className="text-unbound-text-primary font-medium hover:text-unbound-purple">
-                      {r.u}
-                    </Link>
-                  </td>
-                  <td className="px-3 py-3 text-unbound-text-tertiary">{r.bu}</td>
-                  <td className="px-3 py-3"><SevBadge severity={r.s}>{r.sev}</SevBadge></td>
-                  <td className="px-3 py-3">
-                    <div className="flex flex-wrap gap-1">{r.esc.map((e) => (<Chip key={e}>+{e}</Chip>))}</div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
-
-        <Card className="col-span-2">
-          <CardHeader title="SLA & waiver governance" meta="4h critical · 7d high" />
-          <div className="p-5 space-y-3 text-[13px]">
-            <Row label="Critical > 24h unresolved" value={<Link href="/issues" className="flex items-center gap-1 font-semibold text-sev-critical">1 <ChevronRight className="w-3.5 h-3.5" /></Link>} />
-            <Row label="High > 7d unresolved" value={<span className="font-semibold text-unbound-text-tertiary">0</span>} />
-            <Row label="MTTR Critical · High" value={<span className="font-semibold">2.1d · 4.2h</span>} />
-            <Row label="Active waivers · expiring ≤ 7d" value={<span className="font-semibold">6 · <span className="text-sev-medium">3</span></span>} />
-
-            <Link href="/admin/suppressions" className="block p-3 rounded-md bg-sev-critical-bg border border-sev-critical/20 hover:bg-sev-critical-bg/80 mt-2">
-              <div className="flex items-start gap-2">
-                <ShieldAlert className="w-4 h-4 text-sev-critical shrink-0 mt-0.5" />
-                <div className="text-[12.5px]">
-                  <div className="font-semibold text-sev-critical">Waiver anomaly detected</div>
-                  <div className="text-unbound-text-secondary mt-0.5 leading-snug">
-                    91% of QA BU has #2 YOLO waived by a single approver on one Friday. Likely a mute.
-                  </div>
-                </div>
-              </div>
-            </Link>
+      {/* FOOTER — single card: SLA strip + anomaly banner + Top risk-weighted devices */}
+      <Card className="mb-5">
+        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-unbound-border">
+          <div className="flex items-baseline gap-2">
+            <h3 className="text-[14px] font-semibold text-unbound-text-primary">Top risk-weighted devices</h3>
+            <span className="text-[11px] text-unbound-text-muted">5 of 730 · open Device 360 for evidence</span>
           </div>
-        </Card>
-      </div>
+          <div className="flex items-center gap-5 text-[11.5px]">
+            <SlaStat label="SLA breach" value={<Link href="/issues" className="font-semibold text-sev-critical">1</Link>} />
+            <SlaStat label="MTTR C/H" value={<span className="font-semibold tabular-nums">2.1d · 4.2h</span>} />
+            <SlaStat label="Waivers active · ≤7d" value={<span className="font-semibold tabular-nums">6 · <span className="text-sev-medium">3</span></span>} />
+          </div>
+        </div>
+        <Link href="/admin/suppressions" className="flex items-start gap-2 px-5 py-3 bg-sev-critical-bg/60 border-b border-sev-critical/20 hover:bg-sev-critical-bg transition-colors">
+          <ShieldAlert className="w-4 h-4 text-sev-critical shrink-0 mt-0.5" />
+          <div className="text-[12.5px]">
+            <span className="font-semibold text-sev-critical">Waiver anomaly detected — </span>
+            <span className="text-unbound-text-secondary">91% of QA BU has #2 YOLO waived by a single approver on one Friday. Likely a mute.</span>
+          </div>
+          <ChevronRight className="w-3.5 h-3.5 text-sev-critical ml-auto mt-0.5" />
+        </Link>
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr className="text-left text-[11px] uppercase tracking-wide text-unbound-text-muted border-b border-unbound-border">
+              <th className="px-5 py-2.5 font-medium">User</th>
+              <th className="px-3 py-2.5 font-medium">BU</th>
+              <th className="px-3 py-2.5 font-medium">Severity</th>
+              <th className="px-3 py-2.5 font-medium">Escalators</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              { u: 'sarah.chen', bu: 'Eng-Platform', sev: '3C / 5H', esc: ['cloud creds', 'admin', 'prod repos'], s: 'critical' as const, id: 'HGXF2XKH45' },
+              { u: 'devtest-3', bu: 'QA', sev: '2C / 1H', esc: ['IMDS reach', 'no sandbox'], s: 'critical' as const, id: 'K43J9S77Z0' },
+              { u: 'marcus.w', bu: 'Finance', sev: '1C / 7H', esc: ['BYOD', 'corp repos', 'MITM CA'], s: 'critical' as const, id: 'PQ77XABC92' },
+              { u: 'raj.patel', bu: 'Eng-AI', sev: '1C / 2H', esc: ['personal acct', 'admin'], s: 'critical' as const, id: 'LMQP9P1QV2' },
+              { u: 'jenna.l', bu: 'DevOps', sev: '1C / 8H', esc: ['hook!', 'MCP!', 'no-policy'], s: 'critical' as const, id: 'TTY4X0ABCD' },
+            ].map((r) => (
+              <tr key={r.u} className="border-b border-unbound-border last:border-0 hover:bg-unbound-bg-hover">
+                <td className="px-5 py-3">
+                  <Link href={`/fleet/devices/${r.id}`} className="text-unbound-text-primary font-medium hover:text-unbound-purple">
+                    {r.u}
+                  </Link>
+                </td>
+                <td className="px-3 py-3 text-unbound-text-tertiary">{r.bu}</td>
+                <td className="px-3 py-3"><SevBadge severity={r.s}>{r.sev}</SevBadge></td>
+                <td className="px-3 py-3">
+                  <div className="flex flex-wrap gap-1">{r.esc.map((e) => (<Chip key={e}>+{e}</Chip>))}</div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
 
       {/* Row 4 — pending actions (conditional) */}
       {pending.length > 0 && (
@@ -442,63 +463,6 @@ function KpiTile({
   );
 }
 
-type QuadrantCells = { blockNow: number; tighten: number; triage: number; allClear: number };
-
-function GovernedRiskQuadrant({ cells, onCellClick }: { cells: QuadrantCells; onCellClick: (label: string) => void }) {
-  return (
-    <Card className="col-span-2">
-      <CardHeader
-        title="Governed × Risk"
-        meta="device posture · click a cell to filter"
-        right={
-          <span
-            title="Governed = MDM-enrolled with posture profile applied (Jamf / Intune / Kandji). Ungoverned = BYOD or unmanaged."
-            className="inline-flex items-center gap-1 text-[10.5px] text-unbound-text-muted cursor-help"
-          >
-            <Info className="w-3 h-3" />
-            what counts as governed?
-          </span>
-        }
-      />
-      <div className="p-5">
-        <div className="grid grid-cols-[56px_1fr_1fr] gap-1.5 items-stretch">
-          <div />
-          <AxisLabel>Ungoverned</AxisLabel>
-          <AxisLabel>Governed</AxisLabel>
-
-          <YAxisLabel>High</YAxisLabel>
-          <QuadCell
-            count={cells.blockNow}
-            title="Block now"
-            tone="danger"
-            onClick={() => onCellClick('ungoverned + high → Block now')}
-          />
-          <QuadCell
-            count={cells.tighten}
-            title="Tighten scopes"
-            tone="amber"
-            onClick={() => onCellClick('governed + high → Tighten scopes')}
-          />
-
-          <YAxisLabel>Low / med</YAxisLabel>
-          <QuadCell
-            count={cells.triage}
-            title="Triage & decide"
-            tone="yellow"
-            onClick={() => onCellClick('ungoverned + low/med → Triage & decide')}
-          />
-          <QuadCell
-            count={cells.allClear}
-            title="All clear"
-            tone="green"
-            onClick={() => onCellClick('governed + low/med → All clear')}
-          />
-        </div>
-      </div>
-    </Card>
-  );
-}
-
 function AxisLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-center text-[9px] font-bold uppercase tracking-widest text-unbound-text-muted">
@@ -521,7 +485,7 @@ const quadTone: Record<'danger' | 'amber' | 'yellow' | 'green', { bg: string; bo
   green:  { bg: 'bg-sev-low-bg',      border: 'border-sev-low/30',      fg: 'text-sev-low',      dot: 'bg-sev-low' },
 };
 
-function QuadCell({ count, title, tone, onClick }: { count: number; title: string; tone: keyof typeof quadTone; onClick: () => void }) {
+function BigQuadCell({ count, title, tone, onClick }: { count: number; title: string; tone: keyof typeof quadTone; onClick: () => void }) {
   const t = quadTone[tone];
   const empty = count === 0;
   return (
@@ -529,21 +493,23 @@ function QuadCell({ count, title, tone, onClick }: { count: number; title: strin
       disabled={empty}
       onClick={onClick}
       className={cn(
-        'flex items-center gap-2.5 px-2.5 py-2 rounded-md border text-left transition-colors',
-        empty ? 'bg-unbound-bg border-unbound-border opacity-50 cursor-default' : `${t.bg} ${t.border} hover:brightness-95`
+        'flex items-center gap-3.5 px-4 py-3.5 rounded-lg border text-left transition-all',
+        empty
+          ? 'bg-unbound-bg border-unbound-border opacity-50 cursor-default'
+          : `${t.bg} ${t.border} hover:brightness-95 hover:shadow-sm`
       )}
     >
-      <span className={cn('text-[18px] font-bold tabular-nums leading-none', empty ? 'text-unbound-text-muted' : t.fg)}>{count}</span>
-      <span className={cn('text-[11.5px] font-semibold', empty ? 'text-unbound-text-muted' : t.fg)}>{title}</span>
+      <span className={cn('text-[26px] font-bold tabular-nums leading-none tracking-tight', empty ? 'text-unbound-text-muted' : t.fg)}>{count}</span>
+      <span className={cn('text-[12.5px] font-semibold leading-tight', empty ? 'text-unbound-text-muted' : t.fg)}>{title}</span>
     </button>
   );
 }
 
-function Row({ label, value }: { label: string; value: React.ReactNode }) {
+function SlaStat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between">
-      <span className="text-unbound-text-secondary">{label}</span>
-      {value}
+    <div className="flex items-baseline gap-1.5">
+      <span className="text-[10px] uppercase tracking-wide text-unbound-text-muted">{label}</span>
+      <span>{value}</span>
     </div>
   );
 }
