@@ -29,34 +29,25 @@ type Section = { title: string; items: Item[] };
 
 const sections: Section[] = [
   {
-    title: 'Posture',
+    title: 'Security Posture',
     items: [
       { href: '/', label: 'Overview', icon: LayoutDashboard },
       { href: '/issues', label: 'Issues', icon: AlertTriangle },
-    ],
-  },
-  {
-    title: 'Fleet',
-    items: [
-      { href: '/fleet/devices', label: 'Devices', icon: Laptop },
-      { href: '/fleet/byod', label: 'BYOD posture', icon: Users },
-      { href: '/fleet/heatmap', label: 'BU heatmap', icon: Map },
-      { href: '/fleet/tools', label: 'AI Tools', icon: Wrench },
+      { href: '/drift', label: 'Drift & Baselines', icon: GitBranch },
+      { href: '/timeline', label: 'Timeline', icon: Clock },
+      { href: '/admin/suppressions', label: 'Suppressions', icon: EyeOff },
+      { href: '/compliance/controls', label: 'Compliance', icon: Shield },
+      { href: '/reports', label: 'Reports', icon: FileText },
     ],
   },
   {
     title: 'Inventory',
     items: [
-      { href: '/inventory/mcp', label: 'MCP · Hooks · Extensions', icon: Package },
-    ],
-  },
-  {
-    title: 'Evidence',
-    items: [
-      { href: '/drift', label: 'Drift & Baselines', icon: GitBranch },
-      { href: '/timeline', label: 'Timeline', icon: Clock },
-      { href: '/compliance/controls', label: 'Compliance', icon: Shield },
-      { href: '/reports', label: 'Reports', icon: FileText },
+      { href: '/inventory/mcp', label: 'MCP · Hooks · Ext', icon: Package },
+      { href: '/fleet/devices', label: 'Devices', icon: Laptop },
+      { href: '/fleet/heatmap', label: 'BU heatmap', icon: Map },
+      { href: '/fleet/byod', label: 'BYOD posture', icon: Users },
+      { href: '/fleet/tools', label: 'AI Tools', icon: Wrench },
     ],
   },
   {
@@ -65,7 +56,6 @@ const sections: Section[] = [
       { href: '/admin/trust', label: 'Trust center', icon: BadgeCheck },
       { href: '/admin/catalogs/mcp', label: 'Catalogs', icon: BookMarked },
       { href: '/admin/rules', label: 'Detection Rules', icon: SlidersHorizontal },
-      { href: '/admin/suppressions', label: 'Suppressions', icon: EyeOff },
       { href: '/admin/policies', label: 'Policies (MDM)', icon: ShieldCheck },
       { href: '/admin/integrations', label: 'Integrations', icon: Plug },
       { href: '/admin/setup', label: 'Setup', icon: Cog },
