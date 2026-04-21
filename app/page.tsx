@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from '@/components/AppLink';
-import { Card, CardHeader, PageHeader } from '@/components/Card';
+import { Card, CardHeader } from '@/components/Card';
 import { SevBadge, Chip } from '@/components/SevBadge';
 import {
   ArrowUp,
@@ -104,104 +104,101 @@ export default function Overview() {
     allClear: 487 - riskyDevices.filter((d) =>  isGoverned(d.mdm)).length,  // governed low/med
   };
 
+  const featuredChain = chains[0]; // YOLO execution chain — today's top call
+  const otherChains = chains.slice(1);
+
   return (
     <>
-      <PageHeader
-        title="Discovery & Posture"
-        meta="Every AI coding agent, MCP server, hook and device across your org — ranked by remediation priority. · Last scan 38 min ago"
-        right={
-          <div className="flex gap-2">
-            <button
-              onClick={() => showToast('Discovery scan queued · 487 devices · canary 10% first')}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] rounded-md border border-unbound-border bg-white text-unbound-text-secondary hover:bg-unbound-bg-hover"
-            >
-              <Search className="w-3.5 h-3.5" />
-              Run discovery
-            </button>
-            <button
-              onClick={() => showToast('Signed PDF generated · posture-Q1-2026.pdf · sha256:7d…a81c')}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover"
-            >
-              <FileDown className="w-3.5 h-3.5" />
-              Export signed PDF
-            </button>
-          </div>
-        }
-      />
-
-      {/* Unified KPI strip — 6 typed tiles with risk-distribution rows */}
-      <Card className="mb-5">
-        <div className="grid grid-cols-6 divide-x divide-unbound-border">
-          <KpiTile
-            icon={<AlertTriangle className="w-3.5 h-3.5" />}
-            label="All findings"
-            value={sev.critical + sev.high + sev.medium + sev.low}
-            delta="+3"
-            deltaDir="up"
-            distribution={[
-              { n: sev.critical, sev: 'critical' },
-              { n: sev.high, sev: 'high' },
-              { n: sev.medium, sev: 'medium' },
-              { n: sev.low, sev: 'low' },
-            ]}
-            href="/issues"
-          />
-          <KpiTile
-            icon={<Cpu className="w-3.5 h-3.5" />}
-            label="Agents"
-            value={3}
-            delta="+0"
-            deltaDir="flat"
-            sub="Claude · Cursor · Codex"
-            distribution={[
-              { n: sev.critical, sev: 'critical' },
-              { n: sev.high, sev: 'high' },
-            ]}
-            href="/fleet/tools"
-          />
-          <KpiTile
-            icon={<Server className="w-3.5 h-3.5" />}
-            label="MCP servers"
-            value={mcpInventory.length}
-            delta="+2 new"
-            deltaDir="up"
-            distribution={[{ n: mcpRisky, sev: 'high' }, { n: mcpInventory.length - mcpRisky, sev: 'low' }]}
-            href="/inventory/mcp"
-          />
-          <KpiTile
-            icon={<Webhook className="w-3.5 h-3.5" />}
-            label="Hooks"
-            value={hooksInventory.length}
-            delta={`${hookMalicious} RCE`}
-            deltaDir={hookMalicious > 0 ? 'up' : 'flat'}
-            distribution={[
-              { n: hookMalicious, sev: 'critical' },
-              { n: hookRisky - hookMalicious, sev: 'high' },
-              { n: hooksInventory.length - hookRisky, sev: 'low' },
-            ]}
-            href="/inventory/mcp"
-          />
-          <KpiTile
-            icon={<Laptop className="w-3.5 h-3.5" />}
-            label="Devices"
-            value={487 + 15 + 228}
-            delta="95% covered"
-            deltaDir="flat"
-            sub="487 managed · 15 BYOD · 228 unmanaged"
-            distribution={[{ n: riskyDevices.length, sev: 'critical' }]}
-            href="/fleet/devices"
-          />
-          <KpiTile
-            icon={<EyeOff className="w-3.5 h-3.5" />}
-            label="Dark fleet"
-            value={228}
-            delta="+3"
-            deltaDir="up"
-            sub="Seen on network · no scanner"
-            href="/admin/setup"
-          />
+      {/* Page header — bigger, more confident */}
+      <div className="flex items-end justify-between mb-6 gap-4">
+        <div>
+          <h1 className="text-[30px] font-bold text-unbound-text-primary tracking-tight leading-tight">
+            Discovery &amp; Posture
+          </h1>
+          <p className="text-[13px] text-unbound-text-tertiary mt-1.5 max-w-[680px]">
+            Every AI coding agent, MCP server, hook and device across your org — ranked by remediation priority.
+            <span className="text-unbound-text-muted"> · Last scan 38m ago</span>
+          </p>
         </div>
-      </Card>
+        <div className="flex gap-2">
+          <button
+            onClick={() => showToast('Discovery scan queued · 487 devices · canary 10% first')}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-[12.5px] rounded-md border border-unbound-border bg-white text-unbound-text-secondary hover:bg-unbound-bg-hover"
+          >
+            <Search className="w-3.5 h-3.5" />
+            Run discovery
+          </button>
+          <button
+            onClick={() => showToast('Signed PDF generated · posture-Q1-2026.pdf · sha256:7d…a81c')}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-[12.5px] font-medium rounded-md bg-unbound-purple text-white hover:bg-unbound-purple-hover"
+          >
+            <FileDown className="w-3.5 h-3.5" />
+            Export signed PDF
+          </button>
+        </div>
+      </div>
+
+      {/* TODAY'S TOP CALL — decision-framed hero */}
+      <div className="mb-6 rounded-xl overflow-hidden bg-gradient-to-br from-[#0F0C22] via-[#17132B] to-[#1D1838] text-white shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset]">
+        <div className="flex items-center justify-between px-6 pt-4 pb-3 border-b border-white/10">
+          <div className="flex items-baseline gap-3">
+            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-unbound-purple">
+              ▸ Today&apos;s top call
+            </span>
+            <span className="text-[11px] text-[#8B88A0]">AI-ranked · 14h window before on-call shift</span>
+          </div>
+          <SevBadge severity="critical">{featuredChain.deviceCount} devices affected</SevBadge>
+        </div>
+        <div className="px-6 pt-5 pb-5 grid grid-cols-5 gap-6 items-center">
+          <div className="col-span-3">
+            <h2 className="text-[22px] font-bold tracking-tight leading-tight text-white">
+              Break the YOLO execution chain on Sarah + Raj + devtest-3
+            </h2>
+            <p className="text-[13px] text-[#A6A4B5] mt-2 leading-relaxed">
+              One policy push <span className="font-mono text-white/90 text-[12px] bg-white/5 px-1.5 py-0.5 rounded">claude-perm-ceiling.mobileconfig</span> disables bypass-permissions fleet-wide and collapses 3 findings in one action. Same combo broke Eng-Platform last quarter.
+            </p>
+            <div className="mt-4 rounded-lg bg-white/[0.04] border border-white/[0.08] p-3">
+              <div className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-[#8B88A0] mb-2">Chain</div>
+              <AttackPathGraph
+                chain={featuredChain}
+                onBreakChain={() =>
+                  setChainOpen({
+                    chain: featuredChain.nodes.map((n) => n.label).join(' › '),
+                    devices: featuredChain.devices,
+                  })
+                }
+              />
+            </div>
+          </div>
+          <div className="col-span-2 flex flex-col gap-3">
+            <button
+              onClick={() =>
+                setChainOpen({
+                  chain: featuredChain.nodes.map((n) => n.label).join(' › '),
+                  devices: featuredChain.devices,
+                })
+              }
+              className="group w-full bg-unbound-purple hover:bg-unbound-purple-hover text-white rounded-lg px-5 py-4 text-left transition-all shadow-[0_1px_0_0_rgba(255,255,255,0.15)_inset] hover:shadow-[0_0_0_1px_rgba(123,86,251,0.4),0_8px_24px_-4px_rgba(123,86,251,0.35)]"
+            >
+              <div className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-white/80">Recommended action</div>
+              <div className="text-[17px] font-bold mt-1.5 tracking-tight">Break this chain →</div>
+              <div className="text-[11.5px] text-white/75 mt-1.5 leading-snug">
+                Canary 10% → roll to all 3 devices · rollback on regression · 14 min ETA
+              </div>
+            </button>
+            <div className="grid grid-cols-2 gap-2.5">
+              <CalloutStat label="Findings collapsed" value="3" tone="purple" />
+              <CalloutStat label="Deadline" value="14h" tone="amber" />
+            </div>
+            <div className="text-[11.5px] text-[#8B88A0] leading-snug pt-1">
+              Prefer manual?{' '}
+              <Link href="/issues" className="text-white/90 underline underline-offset-2 hover:text-unbound-purple">
+                open the 3 findings individually →
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* HERO SUMMARY — one designed surface: quadrant + narrative in a single card */}
       <Card className="mb-6 overflow-hidden">
@@ -243,36 +240,58 @@ export default function Overview() {
             </div>
           </div>
           <div className="col-span-2 p-6">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-unbound-text-muted mb-4">
-              What changed since Friday 17:00
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-unbound-text-muted">
+                What changed since Friday 17:00
+              </div>
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-unbound-purple/10 text-unbound-purple text-[9.5px] font-semibold uppercase tracking-wider">
+                <Brain className="w-3 h-3" /> AI
+              </span>
             </div>
-            <div className="text-[13px] text-unbound-text-secondary leading-relaxed space-y-2.5">
-              <p>
-                <span className="font-semibold text-unbound-text-primary">3 new Criticals</span> over the weekend. Most severe: a malicious hook on jenna.l's laptop — project-level `.claude/settings.json` piping pastebin to bash. Classifier 0.97.
-              </p>
-              <p>
-                <span className="font-semibold text-unbound-text-primary">Sarah's YOLO is back</span>. Waiver expired Friday 23:59; flipped bypassPermissions 2h into Monday. Same combo that broke Eng-Platform last quarter.
-              </p>
-              <p>
-                <span className="font-semibold text-unbound-text-primary">Supply-chain inbox grew</span>: 2 unvetted MCPs added fleet-wide. Neither on catalog.
-              </p>
-              <p className="pt-1 border-t border-unbound-border text-unbound-text-tertiary text-[12px] leading-relaxed">
-                <span className="font-semibold text-unbound-purple">Suggested:</span> break YOLO chain on Sarah+Raj+devtest-3 with one policy push (collapses 3 findings), then triage jenna.l before her on-call window in 14h.
-              </p>
-            </div>
+            <ul className="space-y-3 text-[13px] text-unbound-text-secondary leading-snug">
+              <li className="flex gap-2.5">
+                <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-sev-critical shrink-0" />
+                <span>
+                  <span className="font-semibold text-unbound-text-primary">3 new Criticals</span> over the weekend.
+                  Worst: malicious hook on jenna.l — project-level <span className="font-mono text-[11.5px]">.claude/settings.json</span> piping pastebin to bash.
+                </span>
+              </li>
+              <li className="flex gap-2.5">
+                <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-sev-critical shrink-0" />
+                <span>
+                  <span className="font-semibold text-unbound-text-primary">Sarah&apos;s YOLO is back</span>. Waiver expired Friday 23:59 — same combo that broke Eng-Platform last quarter.
+                </span>
+              </li>
+              <li className="flex gap-2.5">
+                <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-sev-high shrink-0" />
+                <span>
+                  <span className="font-semibold text-unbound-text-primary">Supply-chain inbox grew</span>: 2 unvetted MCPs added fleet-wide. Neither on catalog.
+                </span>
+              </li>
+            </ul>
           </div>
         </div>
       </Card>
 
-      {/* DOMINANT VIZ — attack-path chains, the hero visualization */}
-      <Card className="mb-6 bg-gradient-to-b from-white to-unbound-bg-hover/20">
+      {/* Compact KPI strip — demoted, supporting inventory counts */}
+      <div className="mb-6 flex items-stretch gap-0 rounded-xl border border-unbound-border bg-white divide-x divide-unbound-border overflow-hidden">
+        <CompactKpi icon={<AlertTriangle className="w-3.5 h-3.5" />} label="All findings" value={sev.critical + sev.high + sev.medium + sev.low} delta="+3" deltaDir="up" distribution={[{ n: sev.critical, sev: 'critical' }, { n: sev.high, sev: 'high' }]} href="/issues" />
+        <CompactKpi icon={<Cpu className="w-3.5 h-3.5" />} label="Agents" value={3} sub="Claude · Cursor · Codex" href="/fleet/tools" />
+        <CompactKpi icon={<Server className="w-3.5 h-3.5" />} label="MCP servers" value={mcpInventory.length} delta="+2 new" deltaDir="up" distribution={[{ n: mcpRisky, sev: 'high' }]} href="/inventory/mcp" />
+        <CompactKpi icon={<Webhook className="w-3.5 h-3.5" />} label="Hooks" value={hooksInventory.length} delta={`${hookMalicious} RCE`} deltaDir="up" distribution={[{ n: hookMalicious, sev: 'critical' }, { n: hookRisky - hookMalicious, sev: 'high' }]} href="/inventory/mcp" />
+        <CompactKpi icon={<Laptop className="w-3.5 h-3.5" />} label="Devices" value={730} sub="487 managed · 243 unmanaged" href="/fleet/devices" />
+        <CompactKpi icon={<EyeOff className="w-3.5 h-3.5" />} label="Dark fleet" value={228} delta="+3" deltaDir="up" sub="No scanner" href="/admin/setup" />
+      </div>
+
+      {/* Other active attack-path chains — supporting, since the featured one is in the hero */}
+      <Card className="mb-6">
         <CardHeader
-          title="Active attack-path chains"
-          meta={`${chains.length} chains detected · break a single edge to collapse fleet-wide · curated + AI-composed`}
+          title="Other active attack paths"
+          meta={`${otherChains.length} chains · curated + AI-composed · featured chain is above`}
           right={<Zap className="w-4 h-4 text-unbound-purple" />}
         />
-        <div className="p-7 grid grid-cols-2 gap-x-10 gap-y-8">
-          {chains.map((c) => (
+        <div className="p-6 grid grid-cols-3 gap-x-8 gap-y-6">
+          {otherChains.map((c) => (
             <div key={c.name}>
               <div className="flex items-center justify-between mb-2.5">
                 <div className="flex items-baseline gap-2">
@@ -403,66 +422,6 @@ const dotColor: Record<DistributionDot['sev'], string> = {
   low: 'bg-sev-low',
 };
 
-function KpiTile({
-  icon,
-  label,
-  value,
-  delta,
-  deltaDir,
-  sub,
-  distribution,
-  href,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string | number;
-  delta?: string;
-  deltaDir?: 'up' | 'down' | 'flat';
-  sub?: string;
-  distribution?: DistributionDot[];
-  href?: string;
-}) {
-  const dirColor =
-    deltaDir === 'up' ? 'text-sev-critical' : deltaDir === 'down' ? 'text-sev-low' : 'text-unbound-text-muted';
-  const Arrow = deltaDir === 'up' ? ArrowUp : deltaDir === 'down' ? ArrowDown : null;
-  return (
-    <Link
-      href={href ?? '/issues'}
-      className="block px-4 py-3 hover:bg-unbound-bg-hover transition-colors"
-    >
-      <div className="flex items-center gap-1.5 text-[10.5px] uppercase tracking-wide text-unbound-text-muted">
-        <span className="text-unbound-text-muted">{icon}</span>
-        {label}
-      </div>
-      <div className="flex items-baseline gap-2 mt-1">
-        <div className="text-[22px] font-semibold text-unbound-text-primary leading-none tracking-tight tabular-nums">{value}</div>
-        {delta && (
-          <div className={cn('text-[11px] font-medium flex items-center gap-0.5', dirColor)}>
-            {Arrow && <Arrow className="w-3 h-3" />}
-            {delta}
-          </div>
-        )}
-      </div>
-      {distribution && distribution.some((d) => d.n > 0) && (
-        <div className="flex items-center gap-2 mt-2">
-          {distribution.filter((d) => d.n > 0).map((d, i) => (
-            <div key={i} className="flex items-center gap-1 text-[11px] font-medium text-unbound-text-tertiary tabular-nums">
-              <span className={cn('w-1.5 h-1.5 rounded-full', dotColor[d.sev])} />
-              {d.n}
-            </div>
-          ))}
-        </div>
-      )}
-      {sub && !distribution?.some((d) => d.n > 0) && (
-        <div className="mt-2 text-[10.5px] text-unbound-text-muted truncate">{sub}</div>
-      )}
-      {sub && distribution?.some((d) => d.n > 0) && (
-        <div className="mt-1 text-[10.5px] text-unbound-text-muted truncate">{sub}</div>
-      )}
-    </Link>
-  );
-}
-
 function AxisLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-center text-[9px] font-bold uppercase tracking-widest text-unbound-text-muted">
@@ -510,6 +469,72 @@ function SlaStat({ label, value }: { label: string; value: React.ReactNode }) {
     <div className="flex items-baseline gap-1.5">
       <span className="text-[10px] uppercase tracking-wide text-unbound-text-muted">{label}</span>
       <span>{value}</span>
+    </div>
+  );
+}
+
+function CompactKpi({
+  icon,
+  label,
+  value,
+  delta,
+  deltaDir,
+  sub,
+  distribution,
+  href,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
+  delta?: string;
+  deltaDir?: 'up' | 'down' | 'flat';
+  sub?: string;
+  distribution?: DistributionDot[];
+  href?: string;
+}) {
+  const dirColor =
+    deltaDir === 'up' ? 'text-sev-critical' : deltaDir === 'down' ? 'text-sev-low' : 'text-unbound-text-muted';
+  const Arrow = deltaDir === 'up' ? ArrowUp : deltaDir === 'down' ? ArrowDown : null;
+  return (
+    <Link href={href ?? '/issues'} className="flex-1 px-4 py-3 hover:bg-unbound-bg-hover transition-colors">
+      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-unbound-text-muted">
+        <span className="text-unbound-text-muted">{icon}</span>
+        {label}
+      </div>
+      <div className="flex items-baseline gap-2 mt-1">
+        <div className="text-[19px] font-bold text-unbound-text-primary leading-none tracking-tight tabular-nums">{value}</div>
+        {delta && (
+          <div className={cn('text-[10.5px] font-medium flex items-center gap-0.5', dirColor)}>
+            {Arrow && <Arrow className="w-2.5 h-2.5" />}
+            {delta}
+          </div>
+        )}
+      </div>
+      {distribution && distribution.some((d) => d.n > 0) ? (
+        <div className="flex items-center gap-2 mt-1.5">
+          {distribution.filter((d) => d.n > 0).map((d, i) => (
+            <div key={i} className="flex items-center gap-1 text-[10.5px] font-medium text-unbound-text-tertiary tabular-nums">
+              <span className={cn('w-1.5 h-1.5 rounded-full', dotColor[d.sev])} />
+              {d.n}
+            </div>
+          ))}
+        </div>
+      ) : sub ? (
+        <div className="mt-1.5 text-[10px] text-unbound-text-muted truncate">{sub}</div>
+      ) : null}
+    </Link>
+  );
+}
+
+function CalloutStat({ label, value, tone }: { label: string; value: string; tone: 'purple' | 'amber' }) {
+  const toneClass = tone === 'purple'
+    ? 'bg-unbound-purple/15 border-unbound-purple/30 text-white'
+    : 'bg-sev-high/15 border-sev-high/40 text-white';
+  const valueClass = tone === 'purple' ? 'text-unbound-purple' : 'text-sev-high';
+  return (
+    <div className={cn('rounded-md border px-3 py-2.5', toneClass)}>
+      <div className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-white/70">{label}</div>
+      <div className={cn('text-[20px] font-bold leading-none mt-1 tabular-nums', valueClass)}>{value}</div>
     </div>
   );
 }
